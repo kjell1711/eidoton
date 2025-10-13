@@ -1,1 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standort Test</title>
+</head>
+<body>
+    <h1>Standort Test</h1>
+    <div id="standort-info">
+        <p>Dein Standort wird geladen...</p>
+    </div>
+    <p>Test</p>
 
+    <script>
+        function zeigeStandort(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            var standortText = "Breitengrad: " + lat + ", Längengrad: " + lon;
+            document.getElementById("standort-info").innerHTML = standortText;
+        }
+
+        function fehlerHandler(error) {
+            document.getElementById("standort-info").innerHTML = "Standort konnte nicht ermittelt werden.";
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(zeigeStandort, fehlerHandler);
+        } else {
+            document.getElementById("standort-info").innerHTML = "Geolocation wird von diesem Browser nicht unterstützt.";
+        }
+    </script>
+</body>
+</html>
