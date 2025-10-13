@@ -1,0 +1,169 @@
+Projektplan — Lernwebseite (Anton-ähnlich) — iPad / iOS Safari Fokus
+
+Überarbeitete und vereinfachte Version ohne Code-Beispiele. Fokus auf Design, Funktionen, Aufbau und Konzept. Ziel: eine klar strukturierte Lernwebseite ähnlich wie Anton, optimiert für iPads, mit einfachem Login über Namen und einer zentralen Konfigurationsdatei.
+
+⸻
+
+1) Ziel des Projekts
+
+Die Webseite soll eine einfache, übersichtliche Lernplattform sein, die auf dem iPad in Safari perfekt funktioniert. Sie orientiert sich am Aufbau und Design von Anton, soll aber mit minimalem Aufwand und nur statischen Dateien auf GitHub Pages funktionieren.
+
+Das Ziel ist, eine klare und ansprechende Oberfläche zu schaffen, auf der Nutzer durch Tippen zwischen Fächern wechseln, Fragen beantworten und Münzen sammeln können. Alles läuft direkt im Browser, ohne externe Datenbanken oder Server.
+
+⸻
+
+2) Grundprinzip
+	•	Zentrale Datei-Struktur:
+	•	Eine Hauptdatei für die Webseite (HTML, CSS und ggf. JavaScript)
+	•	Eine Konfigurationsdatei (z. B. config.json), in der alle Fragen und Nutzer gespeichert sind.
+	•	Ein Ordner für Icons und Bilder.
+	•	Ohne Backend oder Datenbank: Alle Daten werden aus der config.json gelesen. Änderungen erfolgen manuell über diese Datei.
+	•	Login-System:
+	•	Beim ersten Öffnen erscheint ein einfaches Login-Fenster mit einem Namensfeld.
+	•	Wenn der eingegebene Name bereits in der Konfiguration existiert, werden die dort gespeicherten Daten (z. B. Coins) geladen.
+	•	Wenn der Name nicht existiert, wird ein neuer Nutzer erstellt, der mit 0 Coins startet.
+	•	Es ist keine Speicherung über Local Storage oder Cookies vorgesehen.
+
+⸻
+
+3) Aufbau der Benutzeroberfläche
+
+a) Untere Navigationsleiste
+
+Die Webseite hat am unteren Bildschirmrand eine feste Navigationsleiste mit fünf Schaltflächen. Diese bleibt immer sichtbar.
+
+Von links nach rechts:
+	1.	Spiele: Enthält kleine Spiele, die man nur mit Münzen starten kann.
+	2.	Mathe: Zeigt direkt eine Mathefrage mit drei Antwortmöglichkeiten.
+	3.	Deutsch: Zeigt direkt eine Deutschfrage.
+	4.	Englisch: Zeigt direkt eine Englischfrage.
+	5.	Profil: Zeigt den Namen des Nutzers und die aktuelle Münzanzahl.
+
+Ein Wechsel zwischen diesen Tabs erfolgt sofort, ohne Ladebildschirm oder Hinweis. Die aktuelle Ansicht ändert sich direkt oben im Inhaltsbereich.
+
+b) Hauptbereich (Inhaltsfläche)
+
+Über der Navigationsleiste befindet sich der eigentliche Inhaltsbereich. Je nach gewähltem Tab:
+	•	Bei Spielen: wird der Spielinhalt angezeigt.
+	•	Bei Fächern: erscheint eine Frage mit drei Antwortmöglichkeiten.
+	•	Beim Profil: werden der Nutzername und die gesammelten Münzen angezeigt.
+
+⸻
+
+4) Design und Layout
+
+a) Allgemeines Design
+	•	Klare, helle Oberfläche mit rundlichen Elementen im Stil von iOS.
+	•	Viel Weißraum für Übersichtlichkeit.
+	•	Große Touchflächen, um Bedienung auf dem iPad komfortabel zu machen.
+	•	Dezent animierte Übergänge beim Wechseln der Tabs.
+
+b) Farben und Stil
+	•	Primärfarbe: ein freundlicher Blauton (ähnlich iOS-Standard).
+	•	Sekundärfarben: Grün für Erfolge, Goldgelb für Münzen.
+	•	Hintergrund: hellgrau oder weiß.
+	•	Schrift: Systemschriftarten (Apple San Francisco / Arial / Roboto).
+
+c) Buttons und Elemente
+	•	Runde Ecken und weiche Schatten.
+	•	Antwortoptionen werden als große, runde Schaltflächen dargestellt.
+	•	Bei korrekter Antwort kurz positive Rückmeldung (z. B. kleine Animation oder Farbwechsel).
+
+⸻
+
+5) Funktionsweise der Lernbereiche
+
+a) Aufbau der Fragen
+	•	Es gibt drei Hauptfächer: Mathe, Deutsch und Englisch.
+	•	Jede Fachkategorie enthält mehrere Fragen.
+	•	Jede Frage besteht aus:
+	•	Der eigentlichen Frage.
+	•	Drei Antwortmöglichkeiten.
+	•	Einer richtigen Antwort (eindeutig festgelegt).
+
+Es gibt keine IDs, keine Schwierigkeitsstufen und keine Zusatzinformationen. Jede Frage ist einfach gehalten und steht in einer Liste. Beim Aufruf eines Fachs wird zufällig eine Frage aus der jeweiligen Liste angezeigt.
+
+b) Belohnungssystem
+	•	Für jede richtig beantwortete Frage erhält man einen Coin.
+	•	Falsche Antworten bringen keine Coins.
+	•	Die Anzahl der Coins wird im Profil angezeigt und aus der Config geladen.
+
+c) Wechsel zwischen Fächern
+	•	Der Nutzer kann unten zwischen Mathe, Deutsch und Englisch wechseln.
+	•	Beim Wechsel wird sofort eine neue zufällige Frage angezeigt, ohne Ladezeit.
+
+⸻
+
+6) Konfigurationsdatei
+
+Alle wichtigen Daten liegen in einer zentralen Konfigurationsdatei, die einfach bearbeitet werden kann. Dort stehen:
+	•	Benutzer: mit Name und aktuellem Münzstand.
+	•	Fragen: aufgeteilt in Mathe, Deutsch und Englisch, jeweils als Liste.
+
+Beispielhaft (nur zur Erklärung, kein Code):
+	•	Unter „Benutzer“ werden Einträge mit Name und Coins gespeichert.
+	•	Unter „Mathe“ stehen die Fragen mit ihren drei Antwortoptionen und der richtigen Antwort.
+	•	Beim Öffnen der Seite wird diese Datei gelesen, um Nutzer und Fragen bereitzustellen.
+
+⸻
+
+7) Technische Struktur
+
+a) Dateien
+	•	Eine Hauptseite mit HTML (darin eingebettetes Design und Skript)
+	•	Eine Konfigurationsdatei mit allen Nutzern und Fragen
+	•	Ein Ordner für Icons und Bilder
+
+b) Funktionsweise
+	1.	Beim Laden der Seite wird die Konfiguration eingelesen.
+	2.	Das Login-Fenster erscheint.
+	3.	Nach Eingabe des Namens wird geprüft, ob dieser in der Konfiguration vorhanden ist.
+	4.	Wenn ja, werden die gespeicherten Daten geladen.
+	5.	Wenn nein, wird ein neuer Nutzer erstellt (nur im laufenden Betrieb, ohne Speicherung in der Datei).
+	6.	Danach wird die Hauptansicht mit Navigationsleiste und Inhalt angezeigt.
+
+⸻
+
+8) Umsetzungsschritte
+	1.	Erstellen der HTML-Grundstruktur und des visuellen Layouts.
+	2.	Aufbau der Navigationsleiste mit fünf Schaltflächen.
+	3.	Gestaltung des Login-Fensters (Namenseingabe beim Start).
+	4.	Erstellen der Konfigurationsdatei mit Beispielnutzern und Fragen.
+	5.	Verbindung zwischen Login und Konfiguration: Laden der Nutzerinformationen.
+	6.	Anzeigen der Fragenbereiche und Logik zur zufälligen Auswahl einer Frage pro Fach.
+	7.	Umsetzung des Belohnungssystems mit Coins.
+	8.	Gestaltung des Profils mit Name und Münzstand.
+	9.	Integration des Spielebereichs (kann einfach gehalten sein, z. B. ein Mini-Spiel mit Münzeinsatz).
+	10.	Test auf iPad, Kontrolle der Darstellung, Touch-Bedienung und Lesbarkeit.
+
+⸻
+
+9) Visuelle Darstellung (Überblick)
+
+Die Seite ist so aufgebaut, dass alles in einer Ansicht bleibt. Keine Seitenwechsel, kein Neuladen.
+
+Von oben nach unten:
+	1.	Kopfbereich mit Fachname oder Titel.
+	2.	Inhalt (Frage oder Spiel oder Profil).
+	3.	Feste Navigationsleiste am unteren Rand.
+
+Beispielhafte Aufteilung:
+	•	Oben: Titel „Mathe“ oder „Englisch“.
+	•	Mitte: Frage und drei Antwortoptionen.
+	•	Unten: Navigationsleiste mit fünf Symbolen.
+
+⸻
+
+10) Erweiterungsmöglichkeiten
+	•	Weitere Fächer hinzufügen.
+	•	Zusätzliche Spiele, die man mit Münzen spielen kann.
+	•	Design anpassbar durch Änderung der Farben oder Icons.
+	•	Später eventuell Import/Export der Konfiguration möglich.
+
+⸻
+
+11) Zusammenfassung
+
+Die Webseite soll eine klare, moderne und einfache Lernplattform sein, die komplett auf dem iPad läuft. Sie besteht nur aus wenigen Dateien und nutzt eine zentrale Konfigurationsdatei, in der alle Daten (Nutzer, Fragen, Münzen) gespeichert sind. Der Login erfolgt nur über den Namen, es gibt keine komplizierten IDs oder externe Speicherung. Die Bedienung ist intuitiv, die Oberfläche modern und rund gestaltet, ähnlich wie Anton, mit einer festen Navigationsleiste am unteren Bildschirmrand.
+
+Wenn gewünscht, kann im nächsten Schritt das konkrete Layout-Template erstellt werden, damit man sofort eine Vorschau bekommt, wie alles aussehen wird.
