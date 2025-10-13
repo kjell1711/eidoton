@@ -101,6 +101,91 @@ const [currentTab, setCurrentTab] = useState(‘mathe’);
 const [currentQuestion, setCurrentQuestion] = useState(null);
 const [feedback, setFeedback] = useState(null);
 const [loginInput, setLoginInput] = useState(’’);
+const [gameActive, setGameActive] = useState(false);
+const [gameScore, setGameScore] = useState(0);
+const [playerY, setPlayerY] = useState(0);
+const [isJumping, setIsJumping] = useState(false);
+const [obstacles, setObstacles] = useState([]);
+const [gameOver, setGameOver] = useState(false);
+
+// Jump & Run Game Logic
+useEffect(() => {
+if (!gameActive) return;
+
+```
+const gameInterval = setInterval(() => {
+  setObstacles(prev => {
+    const newObstacles = prev
+      .map(obs => ({ ...obs, x: obs.x - 5 }))
+      .filter(obs => obs.x > -50);
+
+    if (Math.random() < 0.02) {
+      newObstacles.push({ x: 400, y: 0 });
+    }
+
+    // Collision detection
+    newObstacles.forEach(obs => {
+      if (obs.x < 70 && obs.x > 20 && playerY < 40) {
+        setGameOver(true);
+        setGameActive(false);
+      }
+    });
+
+    return newObstacles;
+  });
+
+  if (!gameOver) {
+    setGameScore(prev => prev + 1);
+  }
+}, 50);
+
+return () => clearInterval(gameInterval);
+```
+
+}, [gameActive, playerY, gameOver]);
+
+// Jump physics
+useEffect(() => {
+if (!isJumping) return;
+
+```
+let jumpHeight = 0;
+const jumpInterval = setInterval(() => {
+  jumpHeight += 10;
+  if (jumpHeight >= 100) {
+    setIsJumping(false);
+    setPlayerY(0);
+  } else {
+    setPlayerY(jumpHeight);
+  }
+}, 30);
+
+return () => clearInterval(jumpInterval);
+```
+
+}, [isJumping]);
+
+const startGame = () => {
+if (userCoins < 10) return;
+setUserCoins(prev => prev - 10);
+setGameActive(true);
+setGameOver(false);
+setGameScore(0);
+setPlayerY(0);
+setObstacles([]);
+};
+
+const handleJump = () => {
+if (!isJumping && playerY === 0) {
+setIsJumping(true);
+}
+};
+
+const endGame = () => {
+setGameActive(false);
+const coinsEarned = Math.floor(gameScore / 100);
+setUserCoins(prev => prev + coinsEarned);
+};
 
 // Zufällige Frage auswählen
 const getRandomQuestion = (subject) => {
@@ -243,15 +328,119 @@ currentTab === ‘deutsch’ ? ‘Deutsch’ : ‘Englisch’}
 
     {currentTab === 'spiele' && (
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
-          <Gamepad2 className="w-20 h-20 mx-auto mb-4 text-purple-500" />
-          <h3 className="text-2xl font-bold text-gray-800 mb-4">Spiele</h3>
-          <p className="text-gray-600 mb-6">Sammle mehr Münzen, um Spiele freizuschalten!</p>
-          <div className="bg-purple-50 rounded-2xl p-6">
-            <p className="text-lg text-purple-700 font-semibold">Noch nicht freigeschaltet</p>
-            <p className="text-sm text-purple-600 mt-2">Kosten: 10 Münzen</p>
+        {!gameActive && !gameOver && (
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <Gamepad2 className="w-20 h-20 mx-auto mb-4 text-purple-500" />
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Jump & Run</h3>
+            <p className="text-gray-600 mb-6">Springe über Hindernisse und sammle Punkte!</p>
+            <div className="bg-purple-50 rounded-2xl p-6 mb-6">
+              <p className="text-lg text-purple-700 font-semibold mb-2">Kosten: 10 Münzen</p>
+              <p className="text-sm text-purple-600">Du bekommst 1 Münze pro 100 Punkte zurück</p>
+            </div>
+            <button
+              onClick={startGame}
+              disabled={userCoins < 10}
+              className={`w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${
+                userCoins >= 10
+                  ? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {userCoins >= 10 ? 'Spiel starten!' : 'Nicht genug Münzen'}
+            </button>
           </div>
-        </div>
+        )}
+
+        {gameActive && (
+          <div className="bg-white rounded-3xl shadow-lg p-8">
+            <div className="mb-4 flex justify-between items-center">
+              <div className="text-2xl font-bold text-gray-800">
+                Score: {gameScore}
+              </div>
+              <button
+                onClick={endGame}
+                className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold"
+              >
+                Beenden
+              </button>
+            </div>
+            
+            <div 
+              onClick={handleJump}
+              className="relative bg-gradient-to-b from-blue-200 to-green-200 rounded-2xl overflow-hidden cursor-pointer"
+              style={{ height: '300px' }}
+            >
+              {/* Player */}
+              <div
+                className="absolute bg-blue-600 rounded-lg transition-all"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  left: '50px',
+                  bottom: `${playerY + 20}px`
+                }}
+              >
+                <div className="text-2xl flex items-center justify-center h-full">
+                  🏃
+                </div>
+              </div>
+
+              {/* Ground */}
+              <div className="absolute bottom-0 left-0 right-0 h-5 bg-green-600"></div>
+
+              {/* Obstacles */}
+              {obstacles.map((obs, i) => (
+                <div
+                  key={i}
+                  className="absolute bg-red-600 rounded"
+                  style={{
+                    width: '30px',
+                    height: '40px',
+                    left: `${obs.x}px`,
+                    bottom: '20px'
+                  }}
+                >
+                  <div className="text-xl flex items-center justify-center h-full">
+                    🌵
+                  </div>
+                </div>
+              ))}
+
+              <div className="absolute top-4 left-4 bg-white bg-opacity-80 px-4 py-2 rounded-xl">
+                <p className="text-sm font-semibold text-gray-700">Tippe zum Springen!</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {gameOver && (
+          <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+            <div className="text-6xl mb-4">💥</div>
+            <h3 className="text-3xl font-bold text-gray-800 mb-4">Game Over!</h3>
+            <div className="bg-purple-50 rounded-2xl p-6 mb-6">
+              <p className="text-2xl font-bold text-purple-700 mb-2">{gameScore} Punkte</p>
+              <p className="text-lg text-purple-600">
+                +{Math.floor(gameScore / 100)} Münzen verdient! 🪙
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setGameOver(false);
+                if (userCoins >= 10) {
+                  startGame();
+                }
+              }}
+              disabled={userCoins < 10}
+              className={`w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${
+                userCoins >= 10
+                  ? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {userCoins >= 10 ? 'Nochmal spielen!' : 'Nicht genug Münzen'}
+            </button>
+          </div>
+        )}
       </div>
     )}
 
