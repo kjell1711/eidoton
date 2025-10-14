@@ -1,1 +1,207 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Learning App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-user-select:none; user-select:none; touch-action:manipulation; }
+    canvas { image-rendering: pixelated; }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
+
+  <script>
+  let config = null;
+  const app = document.getElementById("app");
+
+  fetch("./config.json")
+    .then(r=>r.json())
+    .then(cfg => { config = cfg; initApp(); })
+    .catch(e => app.innerHTML="<div class='p-8 text-red-600'>Fehler beim Laden der config.json 😢</div>");
+
+  const state = {
+    user:null, coins:0, tab:"mathe", logged:false,
+    question:null, feedback:null,
+    game:{active:false,over:false,score:0,y:200,vy:0,pipes:[],gravity:0.5,flap:-8}
+  };
+
+  function rnd(a,b){return Math.random()*(b-a)+a;}
+
+  function initApp(){
+    render();
+  }
+
+  function login(name){
+    const u = config.users.find(x=>x.name.toLowerCase()===name.toLowerCase());
+    if(u){ state.user=u.name; state.coins=u.coins; }
+    else{ state.user=name; state.coins=0; }
+    state.logged=true;
+    state.question=randomQ("mathe");
+    render();
+  }
+
+  function randomQ(s){const q=config.questions[s];return q[Math.floor(Math.random()*q.length)];}
+
+  function changeTab(t){state.tab=t;state.feedback=null;if(["mathe","deutsch","englisch"].includes(t))state.question=randomQ(t);render();}
+
+  function answer(i){
+    if(state.feedback) return;
+    const ok=i===state.question.correct;
+    state.feedback=ok?"richtig":"falsch";
+    if(ok) state.coins++;
+    render();
+    setTimeout(()=>{state.feedback=null;state.question=randomQ(state.tab);render();},1000);
+  }
+
+  function startGame(){
+    if(state.coins<config.games.flappy.cost) return;
+    state.coins-=config.games.flappy.cost;
+    Object.assign(state.game,{active:true,over:false,score:0,y:200,vy:0,pipes:[]});
+    loop();
+  }
+
+  function flap(){state.game.vy=state.game.flap;}
+
+  function loop(){
+    if(!state.game.active) return;
+    const g=state.game, c=config.games.flappy;
+    g.vy+=g.gravity; g.y+=g.vy;
+    if(g.y>c.height||g.y<0){ gameOver(); return; }
+
+    // pipes
+    if(Math.random()<0.02){
+      const top=rnd(60,c.height-140);
+      g.pipes.push({x:c.width,top:top,gap:100});
+    }
+    g.pipes.forEach(p=>p.x-=2);
+    g.pipes=g.pipes.filter(p=>p.x>-60);
+    g.pipes.forEach(p=>{
+      if(p.x<80&&p.x+60>40){
+        if(g.y<p.top||g.y>p.top+p.gap){ gameOver(); }
+      }
+    });
+    g.score++;
+
+    renderGame();
+    if(g.active) requestAnimationFrame(loop);
+  }
+
+  function gameOver(){
+    const g=state.game, c=config.games.flappy;
+    g.active=false; g.over=true;
+    const earn=Math.floor(g.score/c.rewardFactor);
+    state.coins+=earn;
+    render();
+  }
+
+  function renderLogin(){
+    return `
+    <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+          <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">📚</div>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">Willkommen!</h1>
+          <p class="text-gray-600">Gib deinen Namen ein</p>
+        </div>
+        <input id="name" class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-2xl mb-4 focus:border-blue-500 outline-none">
+        <button id="go" class="w-full bg-blue-500 text-white py-4 rounded-2xl text-lg font-semibold hover:bg-blue-600">Los!</button>
+      </div>
+    </div>`;
+  }
+
+  function render(){
+    if(!state.logged){ app.innerHTML=renderLogin();
+      document.getElementById("go").onclick=()=>login(document.getElementById("name").value.trim());
+      return;
+    }
+
+    let body="";
+    if(state.tab==="spiele"){
+      const g=state.game;
+      body = !g.active&&!g.over?`
+        <div class="bg-white p-8 rounded-3xl shadow-lg text-center">
+          <h2 class="text-3xl font-bold mb-4">Flappy Lernvogel 🐦</h2>
+          <p class="mb-4 text-gray-600">Fliege durch die Lücken!</p>
+          <p class="mb-4 text-purple-700">Kosten: ${config.games.flappy.cost} Münzen</p>
+          <button id="start" class="bg-purple-500 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-purple-600 ${state.coins<config.games.flappy.cost?'opacity-50':''}">Starten</button>
+        </div>`:
+      g.active?renderGameCanvas():`
+        <div class="bg-white p-8 rounded-3xl shadow-lg text-center">
+          <h2 class="text-3xl font-bold mb-2">Game Over 💥</h2>
+          <p class="mb-4 text-purple-700">Score: ${g.score}</p>
+          <button id="restart" class="bg-purple-500 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-purple-600">Nochmal!</button>
+        </div>`;
+    } else if(state.tab==="profil"){
+      body=`<div class="bg-white p-8 rounded-3xl shadow-lg text-center">
+        <div class="text-5xl mb-4">👤</div>
+        <h3 class="text-2xl font-bold">${state.user}</h3>
+        <p class="text-lg text-yellow-600 mt-2">🪙 ${state.coins} Münzen</p>
+      </div>`;
+    } else {
+      const q=state.question;
+      body=`<div class="bg-white p-8 rounded-3xl shadow-lg max-w-2xl mx-auto">
+        <p class="text-2xl font-semibold mb-6">${q.question}</p>
+        ${q.answers.map((a,i)=>`<button data-i="${i}" class="block w-full mb-2 p-4 rounded-2xl bg-blue-50 hover:bg-blue-100">${a}</button>`).join("")}
+        ${state.feedback?`<p class="mt-4 font-bold ${state.feedback==='richtig'?'text-green-600':'text-red-600'}">${state.feedback==='richtig'?'Richtig 🎉':'Falsch 😢'}</p>`:""}
+      </div>`;
+    }
+
+    app.innerHTML=`
+      <div class="flex flex-col h-screen">
+        <div class="bg-white shadow px-6 py-4 flex justify-between">
+          <h2 class="text-2xl font-bold capitalize">${state.tab}</h2>
+          <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full"><span class="text-2xl mr-1">🪙</span>${state.coins}</div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6">${body}</div>
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-inner">
+          <div class="flex justify-around py-2 max-w-2xl mx-auto">
+            ${btn("spiele","🎮","Spiele")}
+            ${btn("mathe","🔢","Mathe")}
+            ${btn("deutsch","📘","Deutsch")}
+            ${btn("englisch","🌐","Englisch")}
+            ${btn("profil","👤","Profil")}
+          </div>
+        </div>
+      </div>`;
+    document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>changeTab(b.dataset.tab));
+    document.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>answer(Number(b.dataset.i)));
+    const s=document.getElementById("start"); if(s) s.onclick=startGame;
+    const r=document.getElementById("restart"); if(r) r.onclick=()=>{state.game.over=false;render();};
+  }
+
+  function btn(t,icon,label){
+    const active=state.tab===t;
+    const col=active?"text-blue-600":"text-gray-500";
+    return `<button data-tab="${t}" class="flex flex-col items-center ${col}"><div class="text-2xl">${icon}</div><span class="text-xs">${label}</span></button>`;
+  }
+
+  function renderGameCanvas(){
+    const c=document.createElement("canvas");
+    const ctx=c.getContext("2d");
+    const g=state.game,conf=config.games.flappy;
+    c.width=conf.width; c.height=conf.height; c.className="mx-auto rounded-2xl shadow-lg";
+    app.querySelector(".flex-1").innerHTML="";
+    app.querySelector(".flex-1").appendChild(c);
+    c.onclick=flap;
+    function draw(){
+      ctx.fillStyle="#aee";ctx.fillRect(0,0,c.width,c.height);
+      ctx.fillStyle="#3a3";
+      g.pipes.forEach(p=>{
+        ctx.fillRect(p.x,0,60,p.top);
+        ctx.fillRect(p.x,p.top+p.gap,60,c.height);
+      });
+      ctx.fillStyle="#f90";
+      ctx.beginPath();ctx.arc(60,g.y,12,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#000";
+      ctx.fillText("Score: "+g.score,10,20);
+    }
+    draw();
+    return "";
+  }
+  </script>
+</body>
+</html>
 
