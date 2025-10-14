@@ -1,1 +1,393 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Learning App (HTML)</title>
+  <!-- Tailwind via CDN to preserve the original design classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* kleine zusätzliche Styles damit Übergänge wie in React aussehen */
+    .rounded-3xl { border-radius: 1.5rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-xl { border-radius: .75rem; }
+    .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+    .transition-all { transition: all .18s ease; }
+  </style>
+</head>
+<body class="antialiased">
+  <!-- Root -->
+  <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
+
+  <script>
+  // Source: konvertiert aus der hochgeladenen React/TSX Datei. Gegenüber Ausgangsdatei wurden Icons durch Emojis/SVG ersetzt und Tailwind über CDN verwendet. Siehe Original: config in TSX. 
+
+  // --- Konfigurationsdaten (gleiche Fragen & Nutzer wie im TSX) ---
+  const configData = {
+    users: [
+      { name: "Max", coins: 15 },
+      { name: "Anna", coins: 23 },
+      { name: "Leon", coins: 8 }
+    ],
+    questions: {
+      mathe: [
+        { question: "Was ist 7 + 5?", answers: ["11","12","13"], correct: 1 },
+        { question: "Was ist 9 × 3?", answers: ["24","27","30"], correct: 1 },
+        { question: "Was ist 20 - 8?", answers: ["11","12","13"], correct: 1 },
+        { question: "Was ist 15 ÷ 3?", answers: ["4","5","6"], correct: 1 },
+        { question: "Was ist 6 + 9?", answers: ["14","15","16"], correct: 1 }
+      ],
+      deutsch: [
+        { question: "Welches Wort ist richtig geschrieben?", answers: ["Fahrrad","Farrad","Farad"], correct: 0 },
+        { question: "Was ist das Gegenteil von 'groß'?", answers: ["klein","dick","schnell"], correct: 0 },
+        { question: "Wie viele Buchstaben hat das Alphabet?", answers: ["24","26","28"], correct: 1 },
+        { question: "Was ist ein Nomen?", answers: ["Ein Tuwort","Ein Namenwort","Ein Wiewort"], correct: 1 },
+        { question: "Welcher Artikel gehört zu 'Haus'?", answers: ["der","die","das"], correct: 2 }
+      ],
+      englisch: [
+        { question: "What is 'Hund' in English?", answers: ["cat","dog","bird"], correct: 1 },
+        { question: "What is 'rot' in English?", answers: ["red","blue","green"], correct: 0 },
+        { question: "How do you say 'Guten Morgen'?", answers: ["Good night","Good morning","Good day"], correct: 1 },
+        { question: "What is 'Apfel' in English?", answers: ["orange","apple","banana"], correct: 1 },
+        { question: "What does 'thank you' mean?", answers: ["Bitte","Danke","Hallo"], correct: 1 }
+      ]
+    }
+  };
+
+  // --- App State (ähnlich useState) ---
+  const state = {
+    isLoggedIn: false,
+    userName: '',
+    userCoins: 0,
+    currentTab: 'mathe',
+    currentQuestion: null,
+    feedback: null,
+    loginInput: '',
+    gameActive: false,
+    gameScore: 0,
+    playerY: 0,
+    isJumping: false,
+    obstacles: [],
+    gameOver: false
+  };
+
+  // DOM root
+  const app = document.getElementById('app');
+
+  // Helfer
+  function getRandomQuestion(subject) {
+    const q = configData.questions[subject];
+    return q[Math.floor(Math.random()*q.length)];
+  }
+
+  function findUserByName(name) {
+    return configData.users.find(u => u.name.toLowerCase() === name.toLowerCase());
+  }
+
+  // --- Game intervals ---
+  let gameInterval = null;
+  let jumpInterval = null;
+
+  function startGameLoop() {
+    if (gameInterval) clearInterval(gameInterval);
+    gameInterval = setInterval(() => {
+      // update obstacles
+      state.obstacles = state.obstacles.map(o => ({...o, x: o.x - 5})).filter(o=> o.x > -50);
+      if (Math.random() < 0.02) state.obstacles.push({ x: 400, y: 0 });
+
+      // collision
+      state.obstacles.forEach(obs => {
+        if (obs.x < 70 && obs.x > 20 && state.playerY < 40) {
+          state.gameOver = true;
+          state.gameActive = false;
+        }
+      });
+
+      if (!state.gameOver) state.gameScore += 1;
+      render();
+    }, 50);
+  }
+
+  function stopGameLoop() {
+    if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
+  }
+
+  function startJumpLoop() {
+    if (jumpInterval) clearInterval(jumpInterval);
+    let jumpHeight = 0;
+    jumpInterval = setInterval(() => {
+      jumpHeight += 10;
+      if (jumpHeight >= 100) {
+        state.isJumping = false;
+        state.playerY = 0;
+        clearInterval(jumpInterval);
+        jumpInterval = null;
+      } else {
+        state.playerY = jumpHeight;
+      }
+      render();
+    }, 30);
+  }
+
+  // --- Actions ---
+  function handleLogin() {
+    const input = state.loginInput.trim();
+    if (!input) return;
+    const existing = findUserByName(input);
+    if (existing) {
+      state.userName = existing.name;
+      state.userCoins = existing.coins;
+    } else {
+      state.userName = input;
+      state.userCoins = 0;
+    }
+    state.isLoggedIn = true;
+    state.currentQuestion = getRandomQuestion('mathe');
+    render();
+  }
+
+  function handleAnswer(index) {
+    if (!state.currentQuestion || state.feedback) return;
+    const isCorrect = index === state.currentQuestion.correct;
+    if (isCorrect) {
+      state.userCoins += 1;
+      state.feedback = 'correct';
+    } else {
+      state.feedback = 'wrong';
+    }
+
+    render();
+    setTimeout(() => {
+      state.feedback = null;
+      if (!['spiele','profil'].includes(state.currentTab)) {
+        state.currentQuestion = getRandomQuestion(state.currentTab);
+      }
+      render();
+    }, 1500);
+  }
+
+  function handleTabChange(tab) {
+    state.currentTab = tab;
+    state.feedback = null;
+    if (['mathe','deutsch','englisch'].includes(tab)) state.currentQuestion = getRandomQuestion(tab);
+    else state.currentQuestion = null;
+    render();
+  }
+
+  function startGame() {
+    if (state.userCoins < 10) return;
+    state.userCoins -= 10;
+    state.gameActive = true;
+    state.gameOver = false;
+    state.gameScore = 0;
+    state.playerY = 0;
+    state.obstacles = [];
+    startGameLoop();
+    render();
+  }
+
+  function handleJump() {
+    if (!state.isJumping && state.playerY === 0) {
+      state.isJumping = true;
+      startJumpLoop();
+    }
+  }
+
+  function endGame() {
+    state.gameActive = false;
+    const coinsEarned = Math.floor(state.gameScore / 100);
+    state.userCoins += coinsEarned;
+    stopGameLoop();
+    render();
+  }
+
+  // --- Render Functions ---
+  function renderLogin() {
+    return `
+      <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+          <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">📚</div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Willkommen!</h1>
+            <p class="text-gray-600">Gib deinen Namen ein, um zu starten</p>
+          </div>
+          <input id="loginInput" type="text" value="" placeholder="Dein Name" class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-2xl mb-4 focus:outline-none focus:border-blue-500 transition-colors" />
+          <button id="loginBtn" class="w-full bg-blue-500 text-white py-4 rounded-2xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg">Los geht's!</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHeader() {
+    const title = state.currentTab === 'spiele' ? 'Spiele' : state.currentTab === 'profil' ? 'Profil' : state.currentTab === 'mathe' ? 'Mathe' : state.currentTab === 'deutsch' ? 'Deutsch' : 'Englisch';
+    return `
+      <div class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800 capitalize">${title}</h2>
+        <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full">
+          <span class="text-2xl mr-2">🪙</span>
+          <span class="font-bold text-lg text-yellow-700" id="coinCount">${state.userCoins}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderProfile() {
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl">👤</div>
+          <h3 class="text-3xl font-bold text-gray-800 mb-2">${state.userName}</h3>
+          <div class="flex items-center justify-center gap-3 mt-6 bg-yellow-50 py-4 px-6 rounded-2xl">
+            <span class="text-4xl">🪙</span>
+            <span class="text-3xl font-bold text-yellow-700">${state.userCoins} Münzen</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameIntro() {
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div class="text-purple-500 text-6xl mb-4">🎮</div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-4">Jump & Run</h3>
+          <p class="text-gray-600 mb-6">Springe über Hindernisse und sammle Punkte!</p>
+          <div class="bg-purple-50 rounded-2xl p-6 mb-6">
+            <p class="text-lg text-purple-700 font-semibold mb-2">Kosten: 10 Münzen</p>
+            <p class="text-sm text-purple-600">Du bekommst 1 Münze pro 100 Punkte zurück</p>
+          </div>
+          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameActive() {
+    // Obstacles DOM
+    const obstaclesHtml = state.obstacles.map((obs, i) => `
+      <div class="absolute bg-red-600 rounded" style="width:30px;height:40px;left:${obs.x}px;bottom:20px">🌵</div>
+    `).join('');
+
+    return `
+      <div class="bg-white rounded-3xl shadow-lg p-8">
+        <div class="mb-4 flex justify-between items-center">
+          <div class="text-2xl font-bold text-gray-800">Score: ${state.gameScore}</div>
+          <button id="endGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">Beenden</button>
+        </div>
+        <div id="gameArea" class="relative bg-gradient-to-b from-blue-200 to-green-200 rounded-2xl overflow-hidden cursor-pointer" style="height:300px">
+          <div class="absolute bg-blue-600 rounded-lg transition-all" style="width:40px;height:40px;left:50px;bottom:${state.playerY + 20}px">🏃</div>
+          <div class="absolute bottom-0 left-0 right-0 h-5 bg-green-600"></div>
+          ${obstaclesHtml}
+          <div class="absolute top-4 left-4 bg-white bg-opacity-80 px-4 py-2 rounded-xl"><p class="text-sm font-semibold text-gray-700">Tippe zum Springen!</p></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameOver() {
+    return `
+      <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+        <div class="text-6xl mb-4">💥</div>
+        <h3 class="text-3xl font-bold text-gray-800 mb-4">Game Over!</h3>
+        <div class="bg-purple-50 rounded-2xl p-6 mb-6">
+          <p class="text-2xl font-bold text-purple-700 mb-2">${state.gameScore} Punkte</p>
+          <p class="text-lg text-purple-600">+${Math.floor(state.gameScore/100)} Münzen verdient! 🪙</p>
+        </div>
+        <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
+      </div>
+    `;
+  }
+
+  function renderQuestionCard() {
+    if (!state.currentQuestion) return '';
+    const answersHtml = state.currentQuestion.answers.map((a,i) => {
+      const base = 'w-full p-6 text-xl font-medium rounded-2xl transition-all transform active:scale-95';
+      let classes = 'bg-blue-50 text-blue-900 hover:bg-blue-100 border-2 border-blue-200';
+      if (state.feedback === 'correct' && i === state.currentQuestion.correct) classes = 'bg-green-500 text-white shadow-lg';
+      else if (state.feedback === 'wrong' && i === state.currentQuestion.correct) classes = 'bg-green-500 text-white shadow-lg';
+      else if (state.feedback === 'wrong') classes = 'bg-red-100 text-red-700 border-2 border-red-300';
+      return `<button data-ans="${i}" class="answerBtn ${base} ${classes}" ${state.feedback? 'disabled': ''}>${a}</button>`;
+    }).join('');
+
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 mb-6">
+          <p class="text-2xl font-semibold text-gray-800 text-center mb-8">${state.currentQuestion.question}</p>
+          <div class="space-y-4">${answersHtml}</div>
+          ${state.feedback === 'correct' ? `<div class="mt-6 text-center"><p class="text-2xl font-bold text-green-600">Richtig! 🎉</p><p class="text-lg text-green-600 mt-2">+1 Münze</p></div>` : ''}
+          ${state.feedback === 'wrong' ? `<div class="mt-6 text-center"><p class="text-2xl font-bold text-red-600">Leider falsch 😔</p><p class="text-lg text-gray-600 mt-2">Versuch's nochmal!</p></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBottomNav() {
+    const c = state.currentTab;
+    function cls(tab,color){ return `flex flex-col items-center p-3 rounded-xl transition-colors ${c===tab? color : 'text-gray-500'}`; }
+    return `
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div class="flex justify-around items-center py-2 max-w-2xl mx-auto">
+          <button data-tab="spiele" class="${cls('spiele','text-purple-600')}"><div class="text-2xl">🎮</div><span class="text-xs font-medium">Spiele</span></button>
+          <button data-tab="mathe" class="${cls('mathe','text-blue-600')}"><div class="text-2xl">🔢</div><span class="text-xs font-medium">Mathe</span></button>
+          <button data-tab="deutsch" class="${cls('deutsch','text-red-600')}"><div class="text-2xl">📘</div><span class="text-xs font-medium">Deutsch</span></button>
+          <button data-tab="englisch" class="${cls('englisch','text-green-600')}"><div class="text-2xl">🌐</div><span class="text-xs font-medium">Englisch</span></button>
+          <button data-tab="profil" class="${cls('profil','text-indigo-600')}"><div class="text-2xl">👤</div><span class="text-xs font-medium">Profil</span></button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    if (!state.isLoggedIn) {
+      app.innerHTML = renderLogin();
+      document.getElementById('loginInput').value = state.loginInput;
+      document.getElementById('loginInput').addEventListener('input', (e) => { state.loginInput = e.target.value; });
+      document.getElementById('loginInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+      document.getElementById('loginBtn').addEventListener('click', handleLogin);
+      return;
+    }
+
+    // Hauptansicht
+    app.innerHTML = `
+      ${renderHeader()}
+      <div class="flex-1 overflow-y-auto p-6 pb-24">
+        ${state.currentTab === 'profil' ? renderProfile() : ''}
+        ${state.currentTab === 'spiele' ? (state.gameActive ? renderGameActive() : state.gameOver ? renderGameOver() : renderGameIntro()) : ''}
+        ${(['mathe','deutsch','englisch'].includes(state.currentTab) && state.currentQuestion) ? renderQuestionCard() : ''}
+      </div>
+      ${renderBottomNav()}
+    `;
+
+    // After DOM insert: attach handlers
+    // coin count is dynamic
+    const coinEl = document.getElementById('coinCount'); if (coinEl) coinEl.textContent = state.userCoins;
+
+    // Game area handlers
+    const ga = document.getElementById('gameArea'); if (ga) ga.addEventListener('click', handleJump);
+    const startBtn = document.getElementById('startGameBtn'); if (startBtn) startBtn.addEventListener('click', startGame);
+    const endBtn = document.getElementById('endGameBtn'); if (endBtn) endBtn.addEventListener('click', endGame);
+    const tryBtn = document.getElementById('tryAgainBtn'); if (tryBtn) tryBtn.addEventListener('click', () => { state.gameOver = false; if (state.userCoins >= 10) startGame(); render(); });
+
+    // Answers
+    document.querySelectorAll('.answerBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.currentTarget.getAttribute('data-ans'));
+        handleAnswer(idx);
+      });
+    });
+
+    // Bottom nav
+    document.querySelectorAll('[data-tab]').forEach(bt => bt.addEventListener('click', (e)=> { handleTabChange(e.currentTarget.getAttribute('data-tab')); }));
+  }
+
+  // initial render
+  render();
+
+  // cleanup when page is closed
+  window.addEventListener('beforeunload', ()=> { stopGameLoop(); if (jumpInterval) clearInterval(jumpInterval); });
+  </script>
+</body>
+</html>
 
