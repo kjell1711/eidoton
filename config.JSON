@@ -1,1 +1,28 @@
+{
+  "users": [
+    { "name": "Max", "coins": 15 },
+    { "name": "Anna", "coins": 23 },
+    { "name": "Leon", "coins": 8 }
+  ],
+  "questions": {
+    "mathe": [
+      { "question": "Was ist 7 + 5?", "answers": ["11", "12", "13"], "correct": 1 },
+      { "question": "Was ist 9 × 3?", "answers": ["24", "27", "30"], "correct": 1 }
+    ],
+    "deutsch": [
+      { "question": "Welches Wort ist richtig geschrieben?", "answers": ["Fahrrad", "Farrad", "Farad"], "correct": 0 }
+    ],
+    "englisch": [
+      { "question": "What is 'Hund' in English?", "answers": ["cat", "dog", "bird"], "correct": 1 }
+    ]
+  },
+  "games": {
+    "flappy": {
+      "width": 400,
+      "height": 300,
+      "cost": 10,
+      "rewardFactor": 100
+    }
+  }
+}
 
