@@ -80,6 +80,7 @@
     userCoins: 0,
     userRichtig: 0,
     userFalsch: 0,
+    newsText: '',
     currentTab: 'mathe',
     currentQuestion: null,
     feedback: null,
@@ -100,6 +101,23 @@
   function getRandomQuestion(subject) {
     const q = configData.questions[subject];
     return q[Math.floor(Math.random()*q.length)];
+  }
+
+  // Firebase Helfer - News laden
+  async function loadNewsFromFirebase() {
+    try {
+      const newsDocRef = doc(db, "app_config", "news");
+      const newsDoc = await getDoc(newsDocRef);
+      
+      if (newsDoc.exists()) {
+        return newsDoc.data().text || '';
+      } else {
+        return 'Keine aktuellen Infos verfügbar.';
+      }
+    } catch (error) {
+      console.error("Firebase Fehler beim Laden der News:", error);
+      return 'Fehler beim Laden der Infos.';
+    }
   }
 
   // Firebase Helfer - User laden/speichern
@@ -191,14 +209,16 @@
     const input = state.loginInput.trim();
     if (!input) return;
     
-    // Lade User von Firebase
+    // Lade User und News von Firebase
     const userData = await loadUserFromFirebase(input);
+    const newsData = await loadNewsFromFirebase();
     
     if (userData) {
       state.userName = userData.name;
       state.userCoins = userData.coins;
       state.userRichtig = userData.richtig || 0;
       state.userFalsch = userData.falsch || 0;
+      state.newsText = newsData;
       state.userId = userData.name;
       state.isLoggedIn = true;
       state.currentQuestion = getRandomQuestion('mathe');
@@ -300,13 +320,21 @@
   function renderProfile() {
     return `
       <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center mb-6">
           <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl">👤</div>
           <h3 class="text-3xl font-bold text-gray-800 mb-2">${state.userName}</h3>
           <div class="flex items-center justify-center gap-3 mt-6 bg-yellow-50 py-4 px-6 rounded-2xl">
             <span class="text-4xl">🪙</span>
             <span class="text-3xl font-bold text-yellow-700">${state.userCoins} Münzen</span>
           </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-lg p-6 border-2 border-blue-200">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">📢</span>
+            <h4 class="text-xl font-bold text-gray-800">Neueste Infos</h4>
+          </div>
+          <p class="text-gray-700 text-lg leading-relaxed">${state.newsText}</p>
         </div>
       </div>
     `;
