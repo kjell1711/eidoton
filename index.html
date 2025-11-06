@@ -133,45 +133,51 @@
   }
 
   // Firebase Helfer - User laden/speichern
-  async function loadUserFromFirebase(name) {
-    try {
-      const userDocRef = doc(db, "users", name);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        return userDoc.data();
-      } else {
-        // Neuer User - erstelle in Firebase mit Ban-Feldern
-        const newUser = {
-          name: name,
-          coins: 0,
-          richtig: 0,
-          falsch: 0,
-          ban: false,
-          banReason: ""
-        };
-        await setDoc(userDocRef, newUser);
-        return newUser;
-      }
-    } catch (error) {
-      console.error("Firebase Fehler beim Laden:", error);
-      return null;
-    }
-  }
+async function loadUserFromFirebase(name) {
+  try {
+    // Username in Kleinbuchstaben umwandeln, damit Groß/Kleinschreibung egal ist
+    const normalizedName = name.toLowerCase();
 
-  async function saveUserToFirebase() {
-    if (!state.userId) return;
-    try {
-      const userDocRef = doc(db, "users", state.userId);
-      await updateDoc(userDocRef, {
-        coins: state.userCoins,
-        richtig: state.userRichtig,
-        falsch: state.userFalsch
-      });
-    } catch (error) {
-      console.error("Firebase Fehler beim Speichern:", error);
+    const userDocRef = doc(db, "users", normalizedName);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (userDoc.exists()) {
+      return userDoc.data();
+    } else {
+      // Neuer User - erstelle in Firebase mit Ban-Feldern
+      const newUser = {
+        name: name, // originaler Name (wie eingegeben)
+        coins: 0,
+        richtig: 0,
+        falsch: 0,
+        ban: false,
+        banReason: ""
+      };
+      await setDoc(userDocRef, newUser);
+      return newUser;
     }
+  } catch (error) {
+    console.error("Firebase Fehler beim Laden:", error);
+    return null;
   }
+}
+
+async function saveUserToFirebase() {
+  if (!state.userId) return;
+  try {
+    // Auch beim Speichern sicherstellen, dass der Key klein geschrieben ist
+    const normalizedUserId = state.userId.toLowerCase();
+    const userDocRef = doc(db, "users", normalizedUserId);
+    await updateDoc(userDocRef, {
+      coins: state.userCoins,
+      richtig: state.userRichtig,
+      falsch: state.userFalsch
+    });
+  } catch (error) {
+    console.error("Firebase Fehler beim Speichern:", error);
+  }
+}
+
 
   // --- Game Logic ---
   let gameInterval = null;
