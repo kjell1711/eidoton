@@ -47,36 +47,47 @@
     console.error("Firebase Fehler:", error);
   }
 
-  // --- Konfigurationsdaten (gleiche Fragen wie im TSX) ---
+  // --- Konfigurationsdaten - NEUE FRAGEN ---
   const configData = {
     questions: {
       mathe: [
-        { question: "Was ist 7 + 5?", answers: ["11","12","13"], correct: 1 },
-        { question: "Was ist 9 × 3?", answers: ["24","27","30"], correct: 1 },
-        { question: "Was ist 20 - 8?", answers: ["11","12","13"], correct: 1 },
-        { question: "Was ist 15 ÷ 3?", answers: ["4","5","6"], correct: 1 },
-        { question: "Was ist 6 + 9?", answers: ["14","15","16"], correct: 1 }
+        { question: "Was ist 12 + 8?", answers: ["18","20","22"], correct: 1 },
+        { question: "Was ist 7 × 6?", answers: ["40","42","44"], correct: 1 },
+        { question: "Was ist 50 - 23?", answers: ["25","27","29"], correct: 1 },
+        { question: "Was ist 36 ÷ 4?", answers: ["8","9","10"], correct: 1 },
+        { question: "Was ist 5 × 5?", answers: ["20","25","30"], correct: 1 },
+        { question: "Was ist 100 - 45?", answers: ["50","55","60"], correct: 1 },
+        { question: "Was ist 8 + 17?", answers: ["23","25","27"], correct: 1 },
+        { question: "Was ist 9 × 4?", answers: ["32","36","40"], correct: 1 }
       ],
       deutsch: [
-        { question: "Welches Wort ist richtig geschrieben?", answers: ["Fahrrad","Farrad","Farad"], correct: 0 },
-        { question: "Was ist das Gegenteil von 'groß'?", answers: ["klein","dick","schnell"], correct: 0 },
-        { question: "Wie viele Buchstaben hat das Alphabet?", answers: ["24","26","28"], correct: 1 },
-        { question: "Was ist ein Nomen?", answers: ["Ein Tuwort","Ein Namenwort","Ein Wiewort"], correct: 1 },
-        { question: "Welcher Artikel gehört zu 'Haus'?", answers: ["der","die","das"], correct: 2 }
+        { question: "Welches Wort ist ein Verb?", answers: ["Haus","laufen","rot"], correct: 1 },
+        { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["5","6","7"], correct: 0 },
+        { question: "Was reimt sich auf 'Haus'?", answers: ["Maus","Baum","Hand"], correct: 0 },
+        { question: "Welches Wort ist richtig: der, die oder das?", answers: ["der Sonne","die Sonne","das Sonne"], correct: 1 },
+        { question: "Was ist der Plural von 'Kind'?", answers: ["Kinder","Kinds","Kindes"], correct: 0 },
+        { question: "Welcher Buchstabe kommt nach M?", answers: ["L","N","O"], correct: 1 },
+        { question: "Was ist ein Adjektiv?", answers: ["Ein Namenwort","Ein Wiewort","Ein Tunwort"], correct: 1 },
+        { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto","Photto","Fotto"], correct: 0 }
       ],
       englisch: [
-        { question: "What is 'Hund' in English?", answers: ["cat","dog","bird"], correct: 1 },
-        { question: "What is 'rot' in English?", answers: ["red","blue","green"], correct: 0 },
-        { question: "How do you say 'Guten Morgen'?", answers: ["Good night","Good morning","Good day"], correct: 1 },
-        { question: "What is 'Apfel' in English?", answers: ["orange","apple","banana"], correct: 1 },
-        { question: "What does 'thank you' mean?", answers: ["Bitte","Danke","Hallo"], correct: 1 }
+        { question: "What is 'Katze' in English?", answers: ["dog","cat","mouse"], correct: 1 },
+        { question: "What color is 'gelb'?", answers: ["yellow","green","blue"], correct: 0 },
+        { question: "How do you say 'Danke'?", answers: ["Please","Thank you","Hello"], correct: 1 },
+        { question: "What is 'Wasser' in English?", answers: ["fire","water","earth"], correct: 1 },
+        { question: "What does 'big' mean?", answers: ["klein","groß","schnell"], correct: 1 },
+        { question: "What is 'Buch' in English?", answers: ["book","pen","table"], correct: 0 },
+        { question: "How do you say 'Tschüss'?", answers: ["Hello","Goodbye","Thanks"], correct: 1 },
+        { question: "What is 'Schule' in English?", answers: ["school","house","car"], correct: 0 }
       ]
     }
   };
 
-  // --- App State (ähnlich useState) ---
+  // --- App State ---
   const state = {
     isLoggedIn: false,
+    isBanned: false,
+    banReason: '',
     userName: '',
     userCoins: 0,
     userRichtig: 0,
@@ -88,6 +99,7 @@
     loginInput: '',
     gameActive: false,
     gameScore: 0,
+    gameTime: 30,
     playerX: 180,
     coins: [],
     gameOver: false,
@@ -129,12 +141,14 @@
       if (userDoc.exists()) {
         return userDoc.data();
       } else {
-        // Neuer User - erstelle in Firebase
+        // Neuer User - erstelle in Firebase mit Ban-Feldern
         const newUser = {
           name: name,
           coins: 0,
           richtig: 0,
-          falsch: 0
+          falsch: 0,
+          ban: false,
+          banReason: ""
         };
         await setDoc(userDocRef, newUser);
         return newUser;
@@ -161,17 +175,21 @@
 
   // --- Game Logic ---
   let gameInterval = null;
+  let timeInterval = null;
 
   function startGameLoop() {
     if (gameInterval) clearInterval(gameInterval);
+    if (timeInterval) clearInterval(timeInterval);
+    
+    // Game loop
     gameInterval = setInterval(() => {
       // Update coins - bewegen nach unten
-      state.coins = state.coins.map(c => ({...c, y: c.y + 3}));
+      state.coins = state.coins.map(c => ({...c, y: c.y + 4}));
       
       // Spawn neue Münze
-      if (Math.random() < 0.02) {
+      if (Math.random() < 0.03) {
         state.coins.push({ 
-          x: Math.random() * 360, 
+          x: 20 + Math.random() * 340, 
           y: 0,
           collected: false
         });
@@ -181,7 +199,7 @@
       state.coins.forEach(coin => {
         if (!coin.collected && 
             coin.y > 250 && coin.y < 290 &&
-            coin.x > state.playerX - 20 && coin.x < state.playerX + 60) {
+            coin.x > state.playerX - 10 && coin.x < state.playerX + 50) {
           coin.collected = true;
           state.gameScore += 10;
         }
@@ -190,13 +208,17 @@
       // Remove coins that are off screen or collected
       state.coins = state.coins.filter(c => !c.collected && c.y < 320);
       
-      // Check game over (30 sekunden = 600 ticks bei 50ms)
-      if (state.gameScore >= 0) {
-        // Game läuft weiter
-      }
-      
       render();
     }, 50);
+    
+    // Timer countdown
+    timeInterval = setInterval(() => {
+      state.gameTime -= 1;
+      if (state.gameTime <= 0) {
+        endGame();
+      }
+      render();
+    }, 1000);
   }
 
   function stopGameLoop() {
@@ -204,13 +226,18 @@
       clearInterval(gameInterval); 
       gameInterval = null; 
     }
+    if (timeInterval) {
+      clearInterval(timeInterval);
+      timeInterval = null;
+    }
   }
 
   function movePlayer(direction) {
-    if (direction === 'left' && state.playerX > 10) {
-      state.playerX -= 30;
-    } else if (direction === 'right' && state.playerX < 350) {
-      state.playerX += 30;
+    if (!state.gameActive) return;
+    if (direction === 'left') {
+      state.playerX = Math.max(10, state.playerX - 40);
+    } else if (direction === 'right') {
+      state.playerX = Math.min(340, state.playerX + 40);
     }
     render();
   }
@@ -225,6 +252,15 @@
     const newsData = await loadNewsFromFirebase();
     
     if (userData) {
+      // Check Ban-Status
+      if (userData.ban === true) {
+        state.isBanned = true;
+        state.banReason = userData.banReason || "Kein Grund angegeben";
+        state.userName = userData.name;
+        render();
+        return;
+      }
+      
       state.userName = userData.name;
       state.userCoins = userData.coins;
       state.userRichtig = userData.richtig || 0;
@@ -232,6 +268,7 @@
       state.newsText = newsData;
       state.userId = userData.name;
       state.isLoggedIn = true;
+      state.isBanned = false;
       state.currentQuestion = getRandomQuestion('mathe');
       render();
     }
@@ -276,17 +313,10 @@
     state.gameActive = true;
     state.gameOver = false;
     state.gameScore = 0;
+    state.gameTime = 30;
     state.playerX = 180;
     state.coins = [];
     startGameLoop();
-    
-    // Auto-end nach 30 Sekunden
-    setTimeout(() => {
-      if (state.gameActive) {
-        endGame();
-      }
-    }, 30000);
-    
     render();
   }
 
@@ -302,6 +332,25 @@
   }
 
   // --- Render Functions ---
+  function renderBanned() {
+    return `
+      <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+          <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-red-500 rounded-full mb-4 text-white text-4xl">🚫</div>
+            <h1 class="text-3xl font-bold text-red-600 mb-2">Account gesperrt</h1>
+            <p class="text-gray-600 mb-4">Dein Account wurde von einem Administrator gesperrt.</p>
+            <div class="bg-red-50 rounded-2xl p-6 border-2 border-red-200">
+              <p class="text-sm font-semibold text-red-800 mb-2">Grund:</p>
+              <p class="text-red-700">${state.banReason}</p>
+            </div>
+          </div>
+          <p class="text-center text-gray-500 text-sm">Wenn du denkst, dass dies ein Fehler ist, kontaktiere bitte einen Administrator.</p>
+        </div>
+      </div>
+    `;
+  }
+
   function renderLogin() {
     return `
       <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -364,7 +413,7 @@
           <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
             <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 10 Münzen</p>
             <p class="text-sm text-yellow-600">Du bekommst 1 Münze pro 50 Punkte zurück</p>
-            <p class="text-xs text-yellow-500 mt-2">Klicke links oder rechts zum Bewegen</p>
+            <p class="text-xs text-yellow-500 mt-2">Nutze die Links/Rechts Buttons zum Bewegen</p>
           </div>
           <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
         </div>
@@ -374,24 +423,24 @@
 
   function renderGameActive() {
     const coinsHtml = state.coins.map((coin, i) => `
-      <div class="absolute text-3xl" style="left:${coin.x}px;top:${coin.y}px">🪙</div>
+      <div class="absolute text-3xl pointer-events-none" style="left:${coin.x}px;top:${coin.y}px">🪙</div>
     `).join('');
 
     return `
       <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-3xl shadow-lg p-8">
+        <div class="bg-white rounded-3xl shadow-lg p-6">
           <div class="mb-4 flex justify-between items-center">
-            <div class="text-2xl font-bold text-yellow-600">Punkte: ${state.gameScore}</div>
-            <button id="endGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-600">Beenden</button>
+            <div class="text-xl font-bold text-yellow-600">Punkte: ${state.gameScore}</div>
+            <div class="text-xl font-bold text-blue-600">Zeit: ${state.gameTime}s</div>
           </div>
-          <div class="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl overflow-hidden" style="height:320px">
+          <div class="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl overflow-hidden mb-4" style="height:320px">
             ${coinsHtml}
-            <div class="absolute text-4xl" style="left:${state.playerX}px;bottom:20px">🧺</div>
+            <div class="absolute text-4xl pointer-events-none" style="left:${state.playerX}px;bottom:20px">🧺</div>
             <div class="absolute bottom-0 left-0 right-0 h-2 bg-green-600"></div>
           </div>
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <button id="moveLeftBtn" class="bg-blue-500 text-white py-4 rounded-xl text-xl font-semibold hover:bg-blue-600 active:scale-95 transition-all">← Links</button>
-            <button id="moveRightBtn" class="bg-blue-500 text-white py-4 rounded-xl text-xl font-semibold hover:bg-blue-600 active:scale-95 transition-all">Rechts →</button>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="moveLeftBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">← LINKS</button>
+            <button id="moveRightBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">RECHTS →</button>
           </div>
         </div>
       </div>
@@ -403,7 +452,7 @@
       <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
           <div class="text-6xl mb-4">🎉</div>
-          <h3 class="text-3xl font-bold text-gray-800 mb-4">Spiel Vorbei!</h3>
+          <h3 class="text-3xl font-bold text-gray-800 mb-4">Zeit abgelaufen!</h3>
           <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
             <p class="text-2xl font-bold text-yellow-700 mb-2">${state.gameScore} Punkte</p>
             <p class="text-lg text-yellow-600">+${Math.floor(state.gameScore/50)} Münzen verdient! 🪙</p>
@@ -454,12 +503,22 @@
   }
 
   function render() {
+    // Ban-Screen hat Priorität
+    if (state.isBanned) {
+      appElement.innerHTML = renderBanned();
+      return;
+    }
+
     if (!state.isLoggedIn) {
       appElement.innerHTML = renderLogin();
-      document.getElementById('loginInput').value = state.loginInput;
-      document.getElementById('loginInput').addEventListener('input', (e) => { state.loginInput = e.target.value; });
-      document.getElementById('loginInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
-      document.getElementById('loginBtn').addEventListener('click', handleLogin);
+      const inp = document.getElementById('loginInput');
+      if (inp) {
+        inp.value = state.loginInput;
+        inp.addEventListener('input', (e) => { state.loginInput = e.target.value; });
+        inp.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+      }
+      const btn = document.getElementById('loginBtn');
+      if (btn) btn.addEventListener('click', handleLogin);
       return;
     }
 
@@ -475,27 +534,49 @@
     `;
 
     // After DOM insert: attach handlers
-    const coinEl = document.getElementById('coinCount'); if (coinEl) coinEl.textContent = state.userCoins;
+    const coinEl = document.getElementById('coinCount'); 
+    if (coinEl) coinEl.textContent = state.userCoins;
 
     // Game handlers
     const startBtn = document.getElementById('startGameBtn'); 
-    if (startBtn) startBtn.addEventListener('click', startGame);
-    
-    const endBtn = document.getElementById('endGameBtn'); 
-    if (endBtn) endBtn.addEventListener('click', endGame);
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        startGame();
+      });
+    }
     
     const tryBtn = document.getElementById('tryAgainBtn'); 
-    if (tryBtn) tryBtn.addEventListener('click', async () => { 
-      state.gameOver = false; 
-      if (state.userCoins >= 10) await startGame(); 
-      render(); 
-    });
+    if (tryBtn) {
+      tryBtn.addEventListener('click', async () => { 
+        state.gameOver = false; 
+        if (state.userCoins >= 10) await startGame(); 
+        render(); 
+      });
+    }
     
     const leftBtn = document.getElementById('moveLeftBtn');
-    if (leftBtn) leftBtn.addEventListener('click', () => movePlayer('left'));
+    if (leftBtn) {
+      leftBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        movePlayer('left');
+      });
+      leftBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        movePlayer('left');
+      });
+    }
     
     const rightBtn = document.getElementById('moveRightBtn');
-    if (rightBtn) rightBtn.addEventListener('click', () => movePlayer('right'));
+    if (rightBtn) {
+      rightBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        movePlayer('right');
+      });
+      rightBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        movePlayer('right');
+      });
+    }
 
     // Answers
     document.querySelectorAll('.answerBtn').forEach(btn => {
