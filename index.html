@@ -20,16 +20,30 @@
   <!-- Root -->
   <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
 
-  <script>
-  // Source: konvertiert aus der hochgeladenen React/TSX Datei. Gegenüber Ausgangsdatei wurden Icons durch Emojis/SVG ersetzt und Tailwind über CDN verwendet. Siehe Original: config in TSX. 
+  <script type="module">
+  // Firebase imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-  // --- Konfigurationsdaten (gleiche Fragen & Nutzer wie im TSX) ---
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBXZG4vsRDqpe_XRHeb64MV-NbLbKtijWs",
+    authDomain: "eidoton.firebaseapp.com",
+    projectId: "eidoton",
+    storageBucket: "eidoton.firebasestorage.app",
+    messagingSenderId: "167879420438",
+    appId: "1:167879420438:web:f0c10f3a042eb37a1da337",
+    measurementId: "G-GCBC06PE3R"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // --- Konfigurationsdaten (gleiche Fragen wie im TSX) ---
   const configData = {
-    users: [
-      { name: "Max", coins: 15 },
-      { name: "76189", coins: 999999 },
-      { name: "1711", coins: 999999999998 }
-    ],
     questions: {
       mathe: [
         { question: "Was ist 7 + 5?", answers: ["11","12","13"], correct: 1 },
@@ -69,7 +83,8 @@
     playerY: 0,
     isJumping: false,
     obstacles: [],
-    gameOver: false
+    gameOver: false,
+    userId: null
   };
 
   // DOM root
@@ -81,8 +96,39 @@
     return q[Math.floor(Math.random()*q.length)];
   }
 
-  function findUserByName(name) {
-    return configData.users.find(u => u.name.toLowerCase() === name.toLowerCase());
+  // Firebase Helfer - User laden/speichern
+  async function loadUserFromFirebase(name) {
+    try {
+      const userDocRef = doc(db, "users", name);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        // Neuer User - erstelle in Firebase
+        const newUser = {
+          name: name,
+          coins: 0
+        };
+        await setDoc(userDocRef, newUser);
+        return newUser;
+      }
+    } catch (error) {
+      console.error("Firebase Fehler beim Laden:", error);
+      return null;
+    }
+  }
+
+  async function saveUserToFirebase() {
+    if (!state.userId) return;
+    try {
+      const userDocRef = doc(db, "users", state.userId);
+      await updateDoc(userDocRef, {
+        coins: state.userCoins
+      });
+    } catch (error) {
+      console.error("Firebase Fehler beim Speichern:", error);
+    }
   }
 
   // --- Game intervals ---
@@ -131,28 +177,30 @@
   }
 
   // --- Actions ---
-  function handleLogin() {
+  async function handleLogin() {
     const input = state.loginInput.trim();
     if (!input) return;
-    const existing = findUserByName(input);
-    if (existing) {
-      state.userName = existing.name;
-      state.userCoins = existing.coins;
-    } else {
-      state.userName = input;
-      state.userCoins = 0;
+    
+    // Lade User von Firebase
+    const userData = await loadUserFromFirebase(input);
+    
+    if (userData) {
+      state.userName = userData.name;
+      state.userCoins = userData.coins;
+      state.userId = userData.name;
+      state.isLoggedIn = true;
+      state.currentQuestion = getRandomQuestion('mathe');
+      render();
     }
-    state.isLoggedIn = true;
-    state.currentQuestion = getRandomQuestion('mathe');
-    render();
   }
 
-  function handleAnswer(index) {
+  async function handleAnswer(index) {
     if (!state.currentQuestion || state.feedback) return;
     const isCorrect = index === state.currentQuestion.correct;
     if (isCorrect) {
       state.userCoins += 1;
       state.feedback = 'correct';
+      await saveUserToFirebase();
     } else {
       state.feedback = 'wrong';
     }
@@ -175,9 +223,10 @@
     render();
   }
 
-  function startGame() {
+  async function startGame() {
     if (state.userCoins < 10) return;
     state.userCoins -= 10;
+    await saveUserToFirebase();
     state.gameActive = true;
     state.gameOver = false;
     state.gameScore = 0;
@@ -194,10 +243,11 @@
     }
   }
 
-  function endGame() {
+  async function endGame() {
     state.gameActive = false;
     const coinsEarned = Math.floor(state.gameScore / 100);
     state.userCoins += coinsEarned;
+    await saveUserToFirebase();
     stopGameLoop();
     render();
   }
@@ -368,7 +418,7 @@
     const ga = document.getElementById('gameArea'); if (ga) ga.addEventListener('click', handleJump);
     const startBtn = document.getElementById('startGameBtn'); if (startBtn) startBtn.addEventListener('click', startGame);
     const endBtn = document.getElementById('endGameBtn'); if (endBtn) endBtn.addEventListener('click', endGame);
-    const tryBtn = document.getElementById('tryAgainBtn'); if (tryBtn) tryBtn.addEventListener('click', () => { state.gameOver = false; if (state.userCoins >= 10) startGame(); render(); });
+    const tryBtn = document.getElementById('tryAgainBtn'); if (tryBtn) tryBtn.addEventListener('click', async () => { state.gameOver = false; if (state.userCoins >= 10) await startGame(); render(); });
 
     // Answers
     document.querySelectorAll('.answerBtn').forEach(btn => {
