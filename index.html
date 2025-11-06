@@ -14,6 +14,7 @@
     .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
     .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
     .transition-all { transition: all .18s ease; }
+    .news-text { white-space: pre-wrap; }
   </style>
 </head>
 <body class="antialiased">
@@ -87,9 +88,8 @@
     loginInput: '',
     gameActive: false,
     gameScore: 0,
-    playerY: 0,
-    isJumping: false,
-    obstacles: [],
+    playerX: 180,
+    coins: [],
     gameOver: false,
     userId: null
   };
@@ -159,49 +159,60 @@
     }
   }
 
-  // --- Game intervals ---
+  // --- Game Logic ---
   let gameInterval = null;
-  let jumpInterval = null;
 
   function startGameLoop() {
     if (gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(() => {
-      // update obstacles
-      state.obstacles = state.obstacles.map(o => ({...o, x: o.x - 5})).filter(o=> o.x > -50);
-      if (Math.random() < 0.02) state.obstacles.push({ x: 400, y: 0 });
-
-      // collision
-      state.obstacles.forEach(obs => {
-        if (obs.x < 70 && obs.x > 20 && state.playerY < 40) {
-          state.gameOver = true;
-          state.gameActive = false;
+      // Update coins - bewegen nach unten
+      state.coins = state.coins.map(c => ({...c, y: c.y + 3}));
+      
+      // Spawn neue Münze
+      if (Math.random() < 0.02) {
+        state.coins.push({ 
+          x: Math.random() * 360, 
+          y: 0,
+          collected: false
+        });
+      }
+      
+      // Check collision
+      state.coins.forEach(coin => {
+        if (!coin.collected && 
+            coin.y > 250 && coin.y < 290 &&
+            coin.x > state.playerX - 20 && coin.x < state.playerX + 60) {
+          coin.collected = true;
+          state.gameScore += 10;
         }
       });
-
-      if (!state.gameOver) state.gameScore += 1;
+      
+      // Remove coins that are off screen or collected
+      state.coins = state.coins.filter(c => !c.collected && c.y < 320);
+      
+      // Check game over (30 sekunden = 600 ticks bei 50ms)
+      if (state.gameScore >= 0) {
+        // Game läuft weiter
+      }
+      
       render();
     }, 50);
   }
 
   function stopGameLoop() {
-    if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
+    if (gameInterval) { 
+      clearInterval(gameInterval); 
+      gameInterval = null; 
+    }
   }
 
-  function startJumpLoop() {
-    if (jumpInterval) clearInterval(jumpInterval);
-    let jumpHeight = 0;
-    jumpInterval = setInterval(() => {
-      jumpHeight += 10;
-      if (jumpHeight >= 100) {
-        state.isJumping = false;
-        state.playerY = 0;
-        clearInterval(jumpInterval);
-        jumpInterval = null;
-      } else {
-        state.playerY = jumpHeight;
-      }
-      render();
-    }, 30);
+  function movePlayer(direction) {
+    if (direction === 'left' && state.playerX > 10) {
+      state.playerX -= 30;
+    } else if (direction === 'right' && state.playerX < 350) {
+      state.playerX += 30;
+    }
+    render();
   }
 
   // --- Actions ---
@@ -265,22 +276,25 @@
     state.gameActive = true;
     state.gameOver = false;
     state.gameScore = 0;
-    state.playerY = 0;
-    state.obstacles = [];
+    state.playerX = 180;
+    state.coins = [];
     startGameLoop();
+    
+    // Auto-end nach 30 Sekunden
+    setTimeout(() => {
+      if (state.gameActive) {
+        endGame();
+      }
+    }, 30000);
+    
     render();
   }
 
-  function handleJump() {
-    if (!state.isJumping && state.playerY === 0) {
-      state.isJumping = true;
-      startJumpLoop();
-    }
-  }
-
   async function endGame() {
+    if (!state.gameActive) return;
     state.gameActive = false;
-    const coinsEarned = Math.floor(state.gameScore / 100);
+    state.gameOver = true;
+    const coinsEarned = Math.floor(state.gameScore / 50);
     state.userCoins += coinsEarned;
     await saveUserToFirebase();
     stopGameLoop();
@@ -334,7 +348,7 @@
             <span class="text-2xl">📢</span>
             <h4 class="text-xl font-bold text-gray-800">Neueste Infos</h4>
           </div>
-          <p class="text-gray-700 text-lg leading-relaxed">${state.newsText}</p>
+          <p class="text-gray-700 text-lg leading-relaxed news-text">${state.newsText}</p>
         </div>
       </div>
     `;
@@ -344,36 +358,41 @@
     return `
       <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
-          <div class="text-purple-500 text-6xl mb-4">🎮</div>
-          <h3 class="text-2xl font-bold text-gray-800 mb-4">Jump & Run</h3>
-          <p class="text-gray-600 mb-6">Springe über Hindernisse und sammle Punkte!</p>
-          <div class="bg-purple-50 rounded-2xl p-6 mb-6">
-            <p class="text-lg text-purple-700 font-semibold mb-2">Kosten: 10 Münzen</p>
-            <p class="text-sm text-purple-600">Du bekommst 1 Münze pro 100 Punkte zurück</p>
+          <div class="text-yellow-500 text-6xl mb-4">🪙</div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-4">Münzen Fangen</h3>
+          <p class="text-gray-600 mb-6">Fange so viele Münzen wie möglich in 30 Sekunden!</p>
+          <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
+            <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 10 Münzen</p>
+            <p class="text-sm text-yellow-600">Du bekommst 1 Münze pro 50 Punkte zurück</p>
+            <p class="text-xs text-yellow-500 mt-2">Klicke links oder rechts zum Bewegen</p>
           </div>
-          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
+          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
         </div>
       </div>
     `;
   }
 
   function renderGameActive() {
-    // Obstacles DOM
-    const obstaclesHtml = state.obstacles.map((obs, i) => `
-      <div class="absolute bg-red-600 rounded" style="width:30px;height:40px;left:${obs.x}px;bottom:20px">🌵</div>
+    const coinsHtml = state.coins.map((coin, i) => `
+      <div class="absolute text-3xl" style="left:${coin.x}px;top:${coin.y}px">🪙</div>
     `).join('');
 
     return `
-      <div class="bg-white rounded-3xl shadow-lg p-8">
-        <div class="mb-4 flex justify-between items-center">
-          <div class="text-2xl font-bold text-gray-800">Score: ${state.gameScore}</div>
-          <button id="endGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">Beenden</button>
-        </div>
-        <div id="gameArea" class="relative bg-gradient-to-b from-blue-200 to-green-200 rounded-2xl overflow-hidden cursor-pointer" style="height:300px">
-          <div class="absolute bg-blue-600 rounded-lg transition-all" style="width:40px;height:40px;left:50px;bottom:${state.playerY + 20}px">🏃</div>
-          <div class="absolute bottom-0 left-0 right-0 h-5 bg-green-600"></div>
-          ${obstaclesHtml}
-          <div class="absolute top-4 left-4 bg-white bg-opacity-80 px-4 py-2 rounded-xl"><p class="text-sm font-semibold text-gray-700">Tippe zum Springen!</p></div>
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8">
+          <div class="mb-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-yellow-600">Punkte: ${state.gameScore}</div>
+            <button id="endGameBtn" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-600">Beenden</button>
+          </div>
+          <div class="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl overflow-hidden" style="height:320px">
+            ${coinsHtml}
+            <div class="absolute text-4xl" style="left:${state.playerX}px;bottom:20px">🧺</div>
+            <div class="absolute bottom-0 left-0 right-0 h-2 bg-green-600"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <button id="moveLeftBtn" class="bg-blue-500 text-white py-4 rounded-xl text-xl font-semibold hover:bg-blue-600 active:scale-95 transition-all">← Links</button>
+            <button id="moveRightBtn" class="bg-blue-500 text-white py-4 rounded-xl text-xl font-semibold hover:bg-blue-600 active:scale-95 transition-all">Rechts →</button>
+          </div>
         </div>
       </div>
     `;
@@ -381,14 +400,16 @@
 
   function renderGameOver() {
     return `
-      <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
-        <div class="text-6xl mb-4">💥</div>
-        <h3 class="text-3xl font-bold text-gray-800 mb-4">Game Over!</h3>
-        <div class="bg-purple-50 rounded-2xl p-6 mb-6">
-          <p class="text-2xl font-bold text-purple-700 mb-2">${state.gameScore} Punkte</p>
-          <p class="text-lg text-purple-600">+${Math.floor(state.gameScore/100)} Münzen verdient! 🪙</p>
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-3xl font-bold text-gray-800 mb-4">Spiel Vorbei!</h3>
+          <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
+            <p class="text-2xl font-bold text-yellow-700 mb-2">${state.gameScore} Punkte</p>
+            <p class="text-lg text-yellow-600">+${Math.floor(state.gameScore/50)} Münzen verdient! 🪙</p>
+          </div>
+          <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
         </div>
-        <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-purple-500 text-white hover:bg-purple-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
       </div>
     `;
   }
@@ -454,14 +475,27 @@
     `;
 
     // After DOM insert: attach handlers
-    // coin count is dynamic
     const coinEl = document.getElementById('coinCount'); if (coinEl) coinEl.textContent = state.userCoins;
 
-    // Game area handlers
-    const ga = document.getElementById('gameArea'); if (ga) ga.addEventListener('click', handleJump);
-    const startBtn = document.getElementById('startGameBtn'); if (startBtn) startBtn.addEventListener('click', startGame);
-    const endBtn = document.getElementById('endGameBtn'); if (endBtn) endBtn.addEventListener('click', endGame);
-    const tryBtn = document.getElementById('tryAgainBtn'); if (tryBtn) tryBtn.addEventListener('click', async () => { state.gameOver = false; if (state.userCoins >= 10) await startGame(); render(); });
+    // Game handlers
+    const startBtn = document.getElementById('startGameBtn'); 
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    
+    const endBtn = document.getElementById('endGameBtn'); 
+    if (endBtn) endBtn.addEventListener('click', endGame);
+    
+    const tryBtn = document.getElementById('tryAgainBtn'); 
+    if (tryBtn) tryBtn.addEventListener('click', async () => { 
+      state.gameOver = false; 
+      if (state.userCoins >= 10) await startGame(); 
+      render(); 
+    });
+    
+    const leftBtn = document.getElementById('moveLeftBtn');
+    if (leftBtn) leftBtn.addEventListener('click', () => movePlayer('left'));
+    
+    const rightBtn = document.getElementById('moveRightBtn');
+    if (rightBtn) rightBtn.addEventListener('click', () => movePlayer('right'));
 
     // Answers
     document.querySelectorAll('.answerBtn').forEach(btn => {
@@ -479,7 +513,7 @@
   render();
 
   // cleanup when page is closed
-  window.addEventListener('beforeunload', ()=> { stopGameLoop(); if (jumpInterval) clearInterval(jumpInterval); });
+  window.addEventListener('beforeunload', ()=> { stopGameLoop(); });
   </script>
 </body>
 </html>
