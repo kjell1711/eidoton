@@ -1,1 +1,246 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Learning App (HTML)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .rounded-3xl { border-radius: 1.5rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-xl { border-radius: .75rem; }
+    .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+    .transition-all { transition: all .18s ease; }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
+
+  <script type="module">
+    // --- Firebase Setup ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXZG4vsRDqpe_XRHeb64MV-NbLbKtijWs",
+      authDomain: "eidoton.firebaseapp.com",
+      projectId: "eidoton",
+      storageBucket: "eidoton.firebasestorage.app",
+      messagingSenderId: "167879420438",
+      appId: "1:167879420438:web:f0c10f3a042eb37a1da337",
+      measurementId: "G-GCBC06PE3R"
+    };
+
+    const appFirebase = initializeApp(firebaseConfig);
+    const db = getFirestore(appFirebase);
+    const auth = getAuth();
+
+    // --- Konfigurationsdaten (wie vorher) ---
+    const configData = {
+      users: [
+        { name: "Max", coins: 15 },
+        { name: "76189", coins: 999999 },
+        { name: "1711", coins: 999999999998 }
+      ],
+      questions: {
+        mathe: [
+          { question: "Was ist 7 + 5?", answers: ["11","12","13"], correct: 1 },
+          { question: "Was ist 9 × 3?", answers: ["24","27","30"], correct: 1 },
+          { question: "Was ist 20 - 8?", answers: ["11","12","13"], correct: 1 },
+          { question: "Was ist 15 ÷ 3?", answers: ["4","5","6"], correct: 1 },
+          { question: "Was ist 6 + 9?", answers: ["14","15","16"], correct: 1 }
+        ],
+        deutsch: [
+          { question: "Welches Wort ist richtig geschrieben?", answers: ["Fahrrad","Farrad","Farad"], correct: 0 },
+          { question: "Was ist das Gegenteil von 'groß'?", answers: ["klein","dick","schnell"], correct: 0 },
+          { question: "Wie viele Buchstaben hat das Alphabet?", answers: ["24","26","28"], correct: 1 },
+          { question: "Was ist ein Nomen?", answers: ["Ein Tuwort","Ein Namenwort","Ein Wiewort"], correct: 1 },
+          { question: "Welcher Artikel gehört zu 'Haus'?", answers: ["der","die","das"], correct: 2 }
+        ],
+        englisch: [
+          { question: "What is 'Hund' in English?", answers: ["cat","dog","bird"], correct: 1 },
+          { question: "What is 'rot' in English?", answers: ["red","blue","green"], correct: 0 },
+          { question: "How do you say 'Guten Morgen'?", answers: ["Good night","Good morning","Good day"], correct: 1 },
+          { question: "What is 'Apfel' in English?", answers: ["orange","apple","banana"], correct: 1 },
+          { question: "What does 'thank you' mean?", answers: ["Bitte","Danke","Hallo"], correct: 1 }
+        ]
+      }
+    };
+
+    // --- App State ---
+    const state = {
+      isLoggedIn: false,
+      userName: '',
+      userCoins: 0,
+      currentTab: 'mathe',
+      currentQuestion: null,
+      feedback: null,
+      loginInput: '',
+      gameActive: false,
+      gameScore: 0,
+      playerY: 0,
+      isJumping: false,
+      obstacles: [],
+      gameOver: false,
+      uid: null
+    };
+
+    const app = document.getElementById('app');
+
+    // --- Helfer ---
+    function getRandomQuestion(subject) {
+      const q = configData.questions[subject];
+      return q[Math.floor(Math.random()*q.length)];
+    }
+
+    function findUserByName(name) {
+      return configData.users.find(u => u.name.toLowerCase() === name.toLowerCase());
+    }
+
+    // --- Firebase helper ---
+    async function loadUserFromFirestore(uid, name) {
+      const docRef = doc(db, "players", uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        state.userCoins = data.coins ?? 0;
+        state.userName = data.name;
+      } else {
+        state.userCoins = 0;
+        state.userName = name;
+        await setDoc(docRef, { name: name, coins: 0 });
+      }
+    }
+
+    async function saveUserToFirestore() {
+      if (!state.uid) return;
+      const docRef = doc(db, "players", state.uid);
+      await setDoc(docRef, { name: state.userName, coins: state.userCoins });
+    }
+
+    // --- Game intervals ---
+    let gameInterval = null;
+    let jumpInterval = null;
+
+    function startGameLoop() {
+      if (gameInterval) clearInterval(gameInterval);
+      gameInterval = setInterval(() => {
+        state.obstacles = state.obstacles.map(o => ({...o, x: o.x - 5})).filter(o=> o.x > -50);
+        if (Math.random() < 0.02) state.obstacles.push({ x: 400, y: 0 });
+        state.obstacles.forEach(obs => {
+          if (obs.x < 70 && obs.x > 20 && state.playerY < 40) {
+            state.gameOver = true;
+            state.gameActive = false;
+          }
+        });
+        if (!state.gameOver) state.gameScore += 1;
+        render();
+      }, 50);
+    }
+
+    function stopGameLoop() {
+      if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
+    }
+
+    function startJumpLoop() {
+      if (jumpInterval) clearInterval(jumpInterval);
+      let jumpHeight = 0;
+      jumpInterval = setInterval(() => {
+        jumpHeight += 10;
+        if (jumpHeight >= 100) {
+          state.isJumping = false;
+          state.playerY = 0;
+          clearInterval(jumpInterval);
+          jumpInterval = null;
+        } else {
+          state.playerY = jumpHeight;
+        }
+        render();
+      }, 30);
+    }
+
+    // --- Actions ---
+    async function handleLogin() {
+      const input = state.loginInput.trim();
+      if (!input) return;
+      try {
+        const userCredential = await signInAnonymously(auth);
+        state.uid = userCredential.user.uid;
+        await loadUserFromFirestore(state.uid, input);
+        state.isLoggedIn = true;
+        state.currentQuestion = getRandomQuestion('mathe');
+        render();
+      } catch (err) {
+        console.error(err);
+        alert("Fehler beim Login: " + err.message);
+      }
+    }
+
+    async function handleAnswer(index) {
+      if (!state.currentQuestion || state.feedback) return;
+      const isCorrect = index === state.currentQuestion.correct;
+      if (isCorrect) {
+        state.userCoins += 1;
+        state.feedback = 'correct';
+      } else {
+        state.feedback = 'wrong';
+      }
+      await saveUserToFirestore();
+      render();
+      setTimeout(() => {
+        state.feedback = null;
+        if (!['spiele','profil'].includes(state.currentTab)) {
+          state.currentQuestion = getRandomQuestion(state.currentTab);
+        }
+        render();
+      }, 1500);
+    }
+
+    function handleTabChange(tab) {
+      state.currentTab = tab;
+      state.feedback = null;
+      if (['mathe','deutsch','englisch'].includes(tab)) state.currentQuestion = getRandomQuestion(tab);
+      else state.currentQuestion = null;
+      render();
+    }
+
+    function startGame() {
+      if (state.userCoins < 10) return;
+      state.userCoins -= 10;
+      state.gameActive = true;
+      state.gameOver = false;
+      state.gameScore = 0;
+      state.playerY = 0;
+      state.obstacles = [];
+      startGameLoop();
+      render();
+    }
+
+    function handleJump() {
+      if (!state.isJumping && state.playerY === 0) {
+        state.isJumping = true;
+        startJumpLoop();
+      }
+    }
+
+    async function endGame() {
+      state.gameActive = false;
+      const coinsEarned = Math.floor(state.gameScore / 100);
+      state.userCoins += coinsEarned;
+      await saveUserToFirestore();
+      stopGameLoop();
+      render();
+    }
+
+    // --- Render functions (unverändert) ---
+    // ... dein komplettes Render bleibt hier wie vorher ...
+
+    render();
+
+    window.addEventListener('beforeunload', ()=> { stopGameLoop(); if (jumpInterval) clearInterval(jumpInterval); });
+  </script>
+</body>
+</html>
 
