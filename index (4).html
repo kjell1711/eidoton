@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Learning App (HTML)</title>
+  <!-- Tailwind via CDN to preserve the original design classes -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* kleine zusätzliche Styles damit Übergänge wie in React aussehen */
+    .rounded-3xl { border-radius: 1.5rem; }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-xl { border-radius: .75rem; }
+    .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+    .transition-all { transition: all .18s ease; }
+    .news-text { white-space: pre-wrap; }
+  </style>
+</head>
+<body class="antialiased">
+  <!-- Root -->
+  <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
+
+  <script type="module">
+  // Firebase imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBXZG4vsRDqpe_XRHeb64MV-NbLbKtijWs",
+    authDomain: "eidoton.firebaseapp.com",
+    projectId: "eidoton",
+    storageBucket: "eidoton.firebasestorage.app",
+    messagingSenderId: "167879420438",
+    appId: "1:167879420438:web:f0c10f3a042eb37a1da337",
+    measurementId: "G-GCBC06PE3R"
+  };
+
+  // Initialize Firebase
+  let db;
+  try {
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp);
+    console.log("Firebase initialisiert!");
+  } catch (error) {
+    console.error("Firebase Fehler:", error);
+  }
+
+  // --- Konfigurationsdaten - NEUE FRAGEN ---
+  const configData = {
+    questions: {
+      mathe: [
+        { question: "Was ist 12 + 8?", answers: ["18","20","22"], correct: 1 },
+        { question: "Was ist 7 × 6?", answers: ["40","42","44"], correct: 1 },
+        { question: "Was ist 50 - 23?", answers: ["25","27","29"], correct: 1 },
+        { question: "Was ist 36 ÷ 4?", answers: ["8","9","10"], correct: 1 },
+        { question: "Was ist 5 × 5?", answers: ["20","25","30"], correct: 1 },
+        { question: "Was ist 100 - 45?", answers: ["50","55","60"], correct: 1 },
+        { question: "Was ist 8 + 17?", answers: ["23","25","27"], correct: 1 },
+        { question: "Was ist 9 × 4?", answers: ["32","36","40"], correct: 1 }
+      ],
+      deutsch: [
+        { question: "Welches Wort ist ein Verb?", answers: ["Haus","laufen","rot"], correct: 1 },
+        { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["5","6","7"], correct: 0 },
+        { question: "Was reimt sich auf 'Haus'?", answers: ["Maus","Baum","Hand"], correct: 0 },
+        { question: "Welches Wort ist richtig: der, die oder das?", answers: ["der Sonne","die Sonne","das Sonne"], correct: 1 },
+        { question: "Was ist der Plural von 'Kind'?", answers: ["Kinder","Kinds","Kindes"], correct: 0 },
+        { question: "Welcher Buchstabe kommt nach M?", answers: ["L","N","O"], correct: 1 },
+        { question: "Was ist ein Adjektiv?", answers: ["Ein Namenwort","Ein Wiewort","Ein Tunwort"], correct: 1 },
+        { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto","Photto","Fotto"], correct: 0 }
+      ],
+      englisch: [
+        { question: "What is 'Katze' in English?", answers: ["dog","cat","mouse"], correct: 1 },
+        { question: "What color is 'gelb'?", answers: ["yellow","green","blue"], correct: 0 },
+        { question: "How do you say 'Danke'?", answers: ["Please","Thank you","Hello"], correct: 1 },
+        { question: "What is 'Wasser' in English?", answers: ["fire","water","earth"], correct: 1 },
+        { question: "What does 'big' mean?", answers: ["klein","groß","schnell"], correct: 1 },
+        { question: "What is 'Buch' in English?", answers: ["book","pen","table"], correct: 0 },
+        { question: "How do you say 'Tschüss'?", answers: ["Hello","Goodbye","Thanks"], correct: 1 },
+        { question: "What is 'Schule' in English?", answers: ["school","house","car"], correct: 0 }
+      ]
+    }
+  };
+
+  // --- App State ---
+  const state = {
+    isLoggedIn: false,
+    isBanned: false,
+    banReason: '',
+    userName: '',
+    userCoins: 0,
+    userRichtig: 0,
+    userFalsch: 0,
+    newsText: '',
+    currentTab: 'mathe',
+    currentQuestion: null,
+    feedback: null,
+    loginInput: '',
+    gameActive: false,
+    gameScore: 0,
+    gameTime: 30,
+    playerX: 180,
+    coins: [],
+    gameOver: false,
+    userId: null
+  };
+
+  // DOM root
+  const appElement = document.getElementById('app');
+
+  // Helfer
+  function getRandomQuestion(subject) {
+    const q = configData.questions[subject];
+    return q[Math.floor(Math.random()*q.length)];
+  }
+
+  // Firebase Helfer - News laden
+  async function loadNewsFromFirebase() {
+    try {
+      const newsDocRef = doc(db, "app_config", "news");
+      const newsDoc = await getDoc(newsDocRef);
+      
+      if (newsDoc.exists()) {
+        return newsDoc.data().text || '';
+      } else {
+        return 'Keine aktuellen Infos verfügbar.';
+      }
+    } catch (error) {
+      console.error("Firebase Fehler beim Laden der News:", error);
+      return 'Fehler beim Laden der Infos.';
+    }
+  }
+
+  // Firebase Helfer - User laden/speichern
+  async function loadUserFromFirebase(name) {
+    try {
+      const userDocRef = doc(db, "users", name);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        // Neuer User - erstelle in Firebase mit Ban-Feldern
+        const newUser = {
+          name: name,
+          coins: 0,
+          richtig: 0,
+          falsch: 0,
+          ban: false,
+          banReason: ""
+        };
+        await setDoc(userDocRef, newUser);
+        return newUser;
+      }
+    } catch (error) {
+      console.error("Firebase Fehler beim Laden:", error);
+      return null;
+    }
+  }
+
+  async function saveUserToFirebase() {
+    if (!state.userId) return;
+    try {
+      const userDocRef = doc(db, "users", state.userId);
+      await updateDoc(userDocRef, {
+        coins: state.userCoins,
+        richtig: state.userRichtig,
+        falsch: state.userFalsch
+      });
+    } catch (error) {
+      console.error("Firebase Fehler beim Speichern:", error);
+    }
+  }
+
+  // --- Game Logic ---
+  let gameInterval = null;
+  let timeInterval = null;
+
+  function startGameLoop() {
+    if (gameInterval) clearInterval(gameInterval);
+    if (timeInterval) clearInterval(timeInterval);
+    
+    // Game loop
+    gameInterval = setInterval(() => {
+      // Update coins - bewegen nach unten
+      state.coins = state.coins.map(c => ({...c, y: c.y + 4}));
+      
+      // Spawn neue Münze
+      if (Math.random() < 0.03) {
+        state.coins.push({ 
+          x: 20 + Math.random() * 340, 
+          y: 0,
+          collected: false
+        });
+      }
+      
+      // Check collision
+      state.coins.forEach(coin => {
+        if (!coin.collected && 
+            coin.y > 250 && coin.y < 290 &&
+            coin.x > state.playerX - 10 && coin.x < state.playerX + 50) {
+          coin.collected = true;
+          state.gameScore += 10;
+        }
+      });
+      
+      // Remove coins that are off screen or collected
+      state.coins = state.coins.filter(c => !c.collected && c.y < 320);
+      
+      render();
+    }, 50);
+    
+    // Timer countdown
+    timeInterval = setInterval(() => {
+      state.gameTime -= 1;
+      if (state.gameTime <= 0) {
+        endGame();
+      }
+      render();
+    }, 1000);
+  }
+
+  function stopGameLoop() {
+    if (gameInterval) { 
+      clearInterval(gameInterval); 
+      gameInterval = null; 
+    }
+    if (timeInterval) {
+      clearInterval(timeInterval);
+      timeInterval = null;
+    }
+  }
+
+  function movePlayer(direction) {
+    if (!state.gameActive) return;
+    if (direction === 'left') {
+      state.playerX = Math.max(10, state.playerX - 40);
+    } else if (direction === 'right') {
+      state.playerX = Math.min(340, state.playerX + 40);
+    }
+    render();
+  }
+
+  // --- Actions ---
+  async function handleLogin() {
+    const input = state.loginInput.trim();
+    if (!input) return;
+    
+    // Lade User und News von Firebase
+    const userData = await loadUserFromFirebase(input);
+    const newsData = await loadNewsFromFirebase();
+    
+    if (userData) {
+      // Check Ban-Status
+      if (userData.ban === true) {
+        state.isBanned = true;
+        state.banReason = userData.banReason || "Kein Grund angegeben";
+        state.userName = userData.name;
+        render();
+        return;
+      }
+      
+      state.userName = userData.name;
+      state.userCoins = userData.coins;
+      state.userRichtig = userData.richtig || 0;
+      state.userFalsch = userData.falsch || 0;
+      state.newsText = newsData;
+      state.userId = userData.name;
+      state.isLoggedIn = true;
+      state.isBanned = false;
+      state.currentQuestion = getRandomQuestion('mathe');
+      render();
+    }
+  }
+
+  async function handleAnswer(index) {
+    if (!state.currentQuestion || state.feedback) return;
+    const isCorrect = index === state.currentQuestion.correct;
+    if (isCorrect) {
+      state.userCoins += 1;
+      state.userRichtig += 1;
+      state.feedback = 'correct';
+      await saveUserToFirebase();
+    } else {
+      state.userFalsch += 1;
+      state.feedback = 'wrong';
+      await saveUserToFirebase();
+    }
+
+    render();
+    setTimeout(() => {
+      state.feedback = null;
+      if (!['spiele','profil'].includes(state.currentTab)) {
+        state.currentQuestion = getRandomQuestion(state.currentTab);
+      }
+      render();
+    }, 1500);
+  }
+
+  function handleTabChange(tab) {
+    state.currentTab = tab;
+    state.feedback = null;
+    if (['mathe','deutsch','englisch'].includes(tab)) state.currentQuestion = getRandomQuestion(tab);
+    else state.currentQuestion = null;
+    render();
+  }
+
+  async function startGame() {
+    if (state.userCoins < 10) return;
+    state.userCoins -= 10;
+    await saveUserToFirebase();
+    state.gameActive = true;
+    state.gameOver = false;
+    state.gameScore = 0;
+    state.gameTime = 30;
+    state.playerX = 180;
+    state.coins = [];
+    startGameLoop();
+    render();
+  }
+
+  async function endGame() {
+    if (!state.gameActive) return;
+    state.gameActive = false;
+    state.gameOver = true;
+    const coinsEarned = Math.floor(state.gameScore / 50);
+    state.userCoins += coinsEarned;
+    await saveUserToFirebase();
+    stopGameLoop();
+    render();
+  }
+
+  // --- Render Functions ---
+  function renderBanned() {
+    return `
+      <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+          <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-red-500 rounded-full mb-4 text-white text-4xl">🚫</div>
+            <h1 class="text-3xl font-bold text-red-600 mb-2">Account gesperrt</h1>
+            <p class="text-gray-600 mb-4">Dein Account wurde von einem Administrator gesperrt.</p>
+            <div class="bg-red-50 rounded-2xl p-6 border-2 border-red-200">
+              <p class="text-sm font-semibold text-red-800 mb-2">Grund:</p>
+              <p class="text-red-700">${state.banReason}</p>
+            </div>
+          </div>
+          <p class="text-center text-gray-500 text-sm">Wenn du denkst, dass dies ein Fehler ist, kontaktiere bitte einen Administrator.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLogin() {
+    return `
+      <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+          <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">📚</div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Willkommen!</h1>
+            <p class="text-gray-600">Gib deinen Namen ein, um zu starten</p>
+          </div>
+          <input id="loginInput" type="text" value="" placeholder="Dein Name" class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-2xl mb-4 focus:outline-none focus:border-blue-500 transition-colors" />
+          <button id="loginBtn" class="w-full bg-blue-500 text-white py-4 rounded-2xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg">Los geht's!</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHeader() {
+    const title = state.currentTab === 'spiele' ? 'Spiele' : state.currentTab === 'profil' ? 'Profil' : state.currentTab === 'mathe' ? 'Mathe' : state.currentTab === 'deutsch' ? 'Deutsch' : 'Englisch';
+    return `
+      <div class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800 capitalize">${title}</h2>
+        <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full">
+          <span class="text-2xl mr-2">🪙</span>
+          <span class="font-bold text-lg text-yellow-700" id="coinCount">${state.userCoins}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderProfile() {
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center mb-6">
+          <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl">👤</div>
+          <h3 class="text-3xl font-bold text-gray-800 mb-2">${state.userName}</h3>
+          <div class="flex items-center justify-center gap-3 mt-6 bg-yellow-50 py-4 px-6 rounded-2xl">
+            <span class="text-4xl">🪙</span>
+            <span class="text-3xl font-bold text-yellow-700">${state.userCoins} Münzen</span>
+          </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-lg p-6 border-2 border-blue-200">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">📢</span>
+            <h4 class="text-xl font-bold text-gray-800">Neueste Infos</h4>
+          </div>
+          <p class="text-gray-700 text-lg leading-relaxed news-text">${state.newsText}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameIntro() {
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div class="text-yellow-500 text-6xl mb-4">🪙</div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-4">Münzen Fangen</h3>
+          <p class="text-gray-600 mb-6">Fange so viele Münzen wie möglich in 30 Sekunden!</p>
+          <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
+            <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 10 Münzen</p>
+            <p class="text-sm text-yellow-600">Du bekommst 1 Münze pro 50 Punkte zurück</p>
+            <p class="text-xs text-yellow-500 mt-2">Nutze die Links/Rechts Buttons zum Bewegen</p>
+          </div>
+          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameActive() {
+    const coinsHtml = state.coins.map((coin, i) => `
+      <div class="absolute text-3xl pointer-events-none" style="left:${coin.x}px;top:${coin.y}px">🪙</div>
+    `).join('');
+
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-6">
+          <div class="mb-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-yellow-600">Punkte: ${state.gameScore}</div>
+            <div class="text-xl font-bold text-blue-600">Zeit: ${state.gameTime}s</div>
+          </div>
+          <div class="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl overflow-hidden mb-4" style="height:320px">
+            ${coinsHtml}
+            <div class="absolute text-4xl pointer-events-none" style="left:${state.playerX}px;bottom:20px">🧺</div>
+            <div class="absolute bottom-0 left-0 right-0 h-2 bg-green-600"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <button id="moveLeftBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">← LINKS</button>
+            <button id="moveRightBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">RECHTS →</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderGameOver() {
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <div class="text-6xl mb-4">🎉</div>
+          <h3 class="text-3xl font-bold text-gray-800 mb-4">Zeit abgelaufen!</h3>
+          <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
+            <p class="text-2xl font-bold text-yellow-700 mb-2">${state.gameScore} Punkte</p>
+            <p class="text-lg text-yellow-600">+${Math.floor(state.gameScore/50)} Münzen verdient! 🪙</p>
+          </div>
+          <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderQuestionCard() {
+    if (!state.currentQuestion) return '';
+    const answersHtml = state.currentQuestion.answers.map((a,i) => {
+      const base = 'w-full p-6 text-xl font-medium rounded-2xl transition-all transform active:scale-95';
+      let classes = 'bg-blue-50 text-blue-900 hover:bg-blue-100 border-2 border-blue-200';
+      if (state.feedback === 'correct' && i === state.currentQuestion.correct) classes = 'bg-green-500 text-white shadow-lg';
+      else if (state.feedback === 'wrong' && i === state.currentQuestion.correct) classes = 'bg-green-500 text-white shadow-lg';
+      else if (state.feedback === 'wrong') classes = 'bg-red-100 text-red-700 border-2 border-red-300';
+      return `<button data-ans="${i}" class="answerBtn ${base} ${classes}" ${state.feedback? 'disabled': ''}>${a}</button>`;
+    }).join('');
+
+    return `
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-lg p-8 mb-6">
+          <p class="text-2xl font-semibold text-gray-800 text-center mb-8">${state.currentQuestion.question}</p>
+          <div class="space-y-4">${answersHtml}</div>
+          ${state.feedback === 'correct' ? `<div class="mt-6 text-center"><p class="text-2xl font-bold text-green-600">Richtig! 🎉</p><p class="text-lg text-green-600 mt-2">+1 Münze</p></div>` : ''}
+          ${state.feedback === 'wrong' ? `<div class="mt-6 text-center"><p class="text-2xl font-bold text-red-600">Leider falsch 😔</p><p class="text-lg text-gray-600 mt-2">Versuch's nochmal!</p></div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBottomNav() {
+    const c = state.currentTab;
+    function cls(tab,color){ return `flex flex-col items-center p-3 rounded-xl transition-colors ${c===tab? color : 'text-gray-500'}`; }
+    return `
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div class="flex justify-around items-center py-2 max-w-2xl mx-auto">
+          <button data-tab="spiele" class="${cls('spiele','text-purple-600')}"><div class="text-2xl">🎮</div><span class="text-xs font-medium">Spiele</span></button>
+          <button data-tab="mathe" class="${cls('mathe','text-blue-600')}"><div class="text-2xl">🔢</div><span class="text-xs font-medium">Mathe</span></button>
+          <button data-tab="deutsch" class="${cls('deutsch','text-red-600')}"><div class="text-2xl">📘</div><span class="text-xs font-medium">Deutsch</span></button>
+          <button data-tab="englisch" class="${cls('englisch','text-green-600')}"><div class="text-2xl">🌍</div><span class="text-xs font-medium">Englisch</span></button>
+          <button data-tab="profil" class="${cls('profil','text-indigo-600')}"><div class="text-2xl">👤</div><span class="text-xs font-medium">Profil</span></button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    // Ban-Screen hat Priorität
+    if (state.isBanned) {
+      appElement.innerHTML = renderBanned();
+      return;
+    }
+
+    if (!state.isLoggedIn) {
+      appElement.innerHTML = renderLogin();
+      const inp = document.getElementById('loginInput');
+      if (inp) {
+        inp.value = state.loginInput;
+        inp.addEventListener('input', (e) => { state.loginInput = e.target.value; });
+        inp.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+      }
+      const btn = document.getElementById('loginBtn');
+      if (btn) btn.addEventListener('click', handleLogin);
+      return;
+    }
+
+    // Hauptansicht
+    appElement.innerHTML = `
+      ${renderHeader()}
+      <div class="flex-1 overflow-y-auto p-6 pb-24">
+        ${state.currentTab === 'profil' ? renderProfile() : ''}
+        ${state.currentTab === 'spiele' ? (state.gameActive ? renderGameActive() : state.gameOver ? renderGameOver() : renderGameIntro()) : ''}
+        ${(['mathe','deutsch','englisch'].includes(state.currentTab) && state.currentQuestion) ? renderQuestionCard() : ''}
+      </div>
+      ${renderBottomNav()}
+    `;
+
+    // After DOM insert: attach handlers
+    const coinEl = document.getElementById('coinCount'); 
+    if (coinEl) coinEl.textContent = state.userCoins;
+
+    // Game handlers
+    const startBtn = document.getElementById('startGameBtn'); 
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        startGame();
+      });
+    }
+    
+    const tryBtn = document.getElementById('tryAgainBtn'); 
+    if (tryBtn) {
+      tryBtn.addEventListener('click', async () => { 
+        state.gameOver = false; 
+        if (state.userCoins >= 10) await startGame(); 
+        render(); 
+      });
+    }
+    
+    const leftBtn = document.getElementById('moveLeftBtn');
+    if (leftBtn) {
+      leftBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        movePlayer('left');
+      });
+      leftBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        movePlayer('left');
+      });
+    }
+    
+    const rightBtn = document.getElementById('moveRightBtn');
+    if (rightBtn) {
+      rightBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        movePlayer('right');
+      });
+      rightBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        movePlayer('right');
+      });
+    }
+
+    // Answers
+    document.querySelectorAll('.answerBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.currentTarget.getAttribute('data-ans'));
+        handleAnswer(idx);
+      });
+    });
+
+    // Bottom nav
+    document.querySelectorAll('[data-tab]').forEach(bt => bt.addEventListener('click', (e)=> { handleTabChange(e.currentTarget.getAttribute('data-tab')); }));
+  }
+
+  // initial render
+  render();
+
+  // cleanup when page is closed
+  window.addEventListener('beforeunload', ()=> { stopGameLoop(); });
+  </script>
+</body>
+</html>
