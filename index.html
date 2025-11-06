@@ -23,7 +23,6 @@
   <script type="module">
   // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-analytics.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
   // Firebase configuration
@@ -38,9 +37,14 @@
   };
 
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const db = getFirestore(app);
+  let db;
+  try {
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp);
+    console.log("Firebase initialisiert!");
+  } catch (error) {
+    console.error("Firebase Fehler:", error);
+  }
 
   // --- Konfigurationsdaten (gleiche Fragen wie im TSX) ---
   const configData = {
@@ -88,7 +92,7 @@
   };
 
   // DOM root
-  const app = document.getElementById('app');
+  const appElement = document.getElementById('app');
 
   // Helfer
   function getRandomQuestion(subject) {
@@ -391,7 +395,7 @@
 
   function render() {
     if (!state.isLoggedIn) {
-      app.innerHTML = renderLogin();
+      appElement.innerHTML = renderLogin();
       document.getElementById('loginInput').value = state.loginInput;
       document.getElementById('loginInput').addEventListener('input', (e) => { state.loginInput = e.target.value; });
       document.getElementById('loginInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
@@ -400,7 +404,7 @@
     }
 
     // Hauptansicht
-    app.innerHTML = `
+    appElement.innerHTML = `
       ${renderHeader()}
       <div class="flex-1 overflow-y-auto p-6 pb-24">
         ${state.currentTab === 'profil' ? renderProfile() : ''}
