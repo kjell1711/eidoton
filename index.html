@@ -47,41 +47,75 @@
     console.error("Firebase Fehler:", error);
   }
 
-  // --- Konfigurationsdaten - NEUE FRAGEN ---
   const configData = {
-    questions: {
-      mathe: [
-        { question: "Was ist 12 + 8?", answers: ["18","20","22"], correct: 1 },
-        { question: "Was ist 7 × 6?", answers: ["40","42","44"], correct: 1 },
-        { question: "Was ist 50 - 23?", answers: ["25","27","29"], correct: 1 },
-        { question: "Was ist 36 ÷ 4?", answers: ["8","9","10"], correct: 1 },
-        { question: "Was ist 5 × 5?", answers: ["20","25","30"], correct: 1 },
-        { question: "Was ist 100 - 45?", answers: ["50","55","60"], correct: 1 },
-        { question: "Was ist 8 + 17?", answers: ["23","25","27"], correct: 1 },
-        { question: "Was ist 9 × 4?", answers: ["32","36","40"], correct: 1 }
-      ],
-      deutsch: [
-        { question: "Welches Wort ist ein Verb?", answers: ["Haus","laufen","rot"], correct: 1 },
-        { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["5","6","7"], correct: 0 },
-        { question: "Was reimt sich auf 'Haus'?", answers: ["Maus","Baum","Hand"], correct: 0 },
-        { question: "Welches Wort ist richtig: der, die oder das?", answers: ["der Sonne","die Sonne","das Sonne"], correct: 1 },
-        { question: "Was ist der Plural von 'Kind'?", answers: ["Kinder","Kinds","Kindes"], correct: 0 },
-        { question: "Welcher Buchstabe kommt nach M?", answers: ["L","N","O"], correct: 1 },
-        { question: "Was ist ein Adjektiv?", answers: ["Ein Namenwort","Ein Wiewort","Ein Tunwort"], correct: 1 },
-        { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto","Photto","Fotto"], correct: 0 }
-      ],
-      englisch: [
-        { question: "What is 'Katze' in English?", answers: ["dog","cat","mouse"], correct: 1 },
-        { question: "What color is 'gelb'?", answers: ["yellow","green","blue"], correct: 0 },
-        { question: "How do you say 'Danke'?", answers: ["Please","Thank you","Hello"], correct: 1 },
-        { question: "What is 'Wasser' in English?", answers: ["fire","water","earth"], correct: 1 },
-        { question: "What does 'big' mean?", answers: ["klein","groß","schnell"], correct: 1 },
-        { question: "What is 'Buch' in English?", answers: ["book","pen","table"], correct: 0 },
-        { question: "How do you say 'Tschüss'?", answers: ["Hello","Goodbye","Thanks"], correct: 1 },
-        { question: "What is 'Schule' in English?", answers: ["school","house","car"], correct: 0 }
-      ]
-    }
-  };
+  questions: {
+    mathe: [
+      { question: "Was ist 12 + 8?", answers: ["22", "18", "20"], correct: 2 },
+      { question: "Was ist 7 × 6?", answers: ["42", "40", "44"], correct: 0 },
+      { question: "Was ist 50 - 23?", answers: ["29", "25", "27"], correct: 2 },
+      { question: "Was ist 36 ÷ 4?", answers: ["9", "8", "10"], correct: 0 },
+      { question: "Was ist 5 × 5?", answers: ["25", "30", "20"], correct: 0 },
+      { question: "Was ist 100 - 45?", answers: ["55", "50", "60"], correct: 0 },
+      { question: "Was ist 8 + 17?", answers: ["27", "25", "23"], correct: 1 },
+      { question: "Was ist 9 × 4?", answers: ["36", "32", "40"], correct: 0 },
+      { question: "Was ist die Wurzel aus 81?", answers: ["9", "8", "7"], correct: 0 },
+      { question: "Was ist 3² + 4²?", answers: ["25", "12", "16"], correct: 0 },
+      { question: "Was ist 20% von 150?", answers: ["25", "30", "20"], correct: 1 },
+      { question: "Wie viele Grad hat ein rechter Winkel?", answers: ["180°", "45°", "90°"], correct: 2 },
+      { question: "Wie viel ist 0,25 als Bruch?", answers: ["1/4", "1/3", "1/2"], correct: 0 },
+      { question: "Was ist 15 × 8?", answers: ["130", "120", "110"], correct: 1 },
+      { question: "Was ist (6 + 4) × 2?", answers: ["18", "16", "20"], correct: 2 },
+      { question: "Was ergibt 2³?", answers: ["8", "6", "9"], correct: 0 },
+      { question: "Wie viel ist 10% von 90?", answers: ["10", "9", "8"], correct: 1 },
+      { question: "Was ist die Fläche eines Rechtecks mit 8 cm und 5 cm?", answers: ["30 cm²", "40 cm²", "45 cm²"], correct: 1 },
+      { question: "Was ist 0,5 × 200?", answers: ["100", "50", "150"], correct: 0 },
+      { question: "Was ist ¼ von 60?", answers: ["15", "25", "30"], correct: 0 }
+    ],
+
+    deutsch: [
+      { question: "Welches Wort ist ein Verb?", answers: ["rot", "Haus", "laufen"], correct: 2 },
+      { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["7", "5", "6"], correct: 1 },
+      { question: "Was reimt sich auf 'Haus'?", answers: ["Maus", "Baum", "Hand"], correct: 0 },
+      { question: "Welches Wort ist richtig: der, die oder das?", answers: ["die Sonne", "der Sonne", "das Sonne"], correct: 0 },
+      { question: "Was ist der Plural von 'Kind'?", answers: ["Kinds", "Kinder", "Kindes"], correct: 1 },
+      { question: "Welcher Buchstabe kommt nach M?", answers: ["N", "O", "L"], correct: 0 },
+      { question: "Was ist ein Adjektiv?", answers: ["Ein Wiewort", "Ein Namenwort", "Ein Tunwort"], correct: 0 },
+      { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto", "Photto", "Fotto"], correct: 0 },
+      { question: "Was ist ein Synonym für 'schnell'?", answers: ["rasch", "träge", "langsam"], correct: 0 },
+      { question: "Welche Zeitform ist 'Ich hatte gegessen'?", answers: ["Perfekt", "Plusquamperfekt", "Präteritum"], correct: 1 },
+      { question: "Was ist das Gegenteil von 'kalt'?", answers: ["still", "frostig", "heiß"], correct: 2 },
+      { question: "Welches Satzzeichen steht am Ende einer Frage?", answers: [".", "!", "?"], correct: 2 },
+      { question: "Was bedeutet das Wort 'mutig'?", answers: ["tapfer", "ängstlich", "langsam"], correct: 0 },
+      { question: "In welchem Satz ist ein Rechtschreibfehler?", answers: ["Er läuft schnell.", "Sie hatt Hunger.", "Ich gehe nach Hause."], correct: 1 },
+      { question: "Was ist ein Subjekt im Satz 'Der Hund bellt'?", answers: ["bellt", "Hund", "Der"], correct: 1 },
+      { question: "Was ist ein Nomen?", answers: ["Dinge oder Personen", "Tätigkeiten", "Eigenschaften"], correct: 0 },
+      { question: "Wie heißt das Gegenteil von 'oben'?", answers: ["unten", "über", "hinten"], correct: 0 },
+      { question: "Was ist ein zusammengesetztes Wort?", answers: ["Schule", "Hausaufgabe", "laufen"], correct: 1 }
+    ],
+
+    englisch: [
+      { question: "What is 'Katze' in English?", answers: ["mouse", "cat", "dog"], correct: 1 },
+      { question: "What color is 'gelb'?", answers: ["blue", "yellow", "green"], correct: 1 },
+      { question: "How do you say 'Danke'?", answers: ["Please", "Hello", "Thank you"], correct: 2 },
+      { question: "What is 'Wasser' in English?", answers: ["earth", "water", "fire"], correct: 1 },
+      { question: "What does 'big' mean?", answers: ["schnell", "groß", "klein"], correct: 1 },
+      { question: "What is 'Buch' in English?", answers: ["book", "pen", "table"], correct: 0 },
+      { question: "How do you say 'Tschüss'?", answers: ["Goodbye", "Thanks", "Hello"], correct: 0 },
+      { question: "What is 'Schule' in English?", answers: ["car", "school", "house"], correct: 1 },
+      { question: "What is the past tense of 'go'?", answers: ["gone", "goed", "went"], correct: 2 },
+      { question: "Translate: 'Ich bin müde.'", answers: ["I am tired.", "I am late.", "I am hungry."], correct: 0 },
+      { question: "Which word means the opposite of 'cold'?", answers: ["wet", "cool", "hot"], correct: 2 },
+      { question: "What is 'Apfel' in English?", answers: ["pear", "banana", "apple"], correct: 2 },
+      { question: "What does 'beautiful' mean?", answers: ["wunderschön", "langsam", "hässlich"], correct: 0 },
+      { question: "Fill in: 'He ___ a car.'", answers: ["has", "had", "have"], correct: 0 },
+      { question: "What is 'Freund' in English?", answers: ["friend", "boy", "man"], correct: 0 },
+      { question: "What is 'schnell' in English?", answers: ["slow", "fast", "late"], correct: 1 },
+      { question: "What is 'Ich mag Pizza'?", answers: ["I like pizza", "I have pizza", "I am pizza"], correct: 0 },
+      { question: "What is 'Tisch' in English?", answers: ["chair", "table", "bed"], correct: 1 },
+      { question: "What is the plural of 'child'?", answers: ["childs", "children", "childes"], correct: 1 }
+    ]
+  }
+};
 
   // --- App State ---
   const state = {
