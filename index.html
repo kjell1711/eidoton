@@ -444,9 +444,9 @@
   const PIPE_SPEED = 3;
 
   async function startFlappyBird() {
-    if (state.userCoins < 10) return;
+    if (state.userCoins < 2) return;
     
-    state.userCoins -= 10;
+    state.userCoins -= 2;
     await saveUserToFirebase();
     
     state.gameActive = true;
@@ -722,11 +722,11 @@
           ` : ''}
           
           <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
-            <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 10 Münzen</p>
+            <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 2 Münzen</p>
             <p class="text-sm text-yellow-600">Tippe oder klicke, um zu fliegen!</p>
             <p class="text-xs text-yellow-500 mt-2">Vermeide die grünen Röhren</p>
           </div>
-          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
+          <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=2? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=2? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
         </div>
       </div>
     `;
