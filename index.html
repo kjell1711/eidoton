@@ -444,9 +444,9 @@
   const PIPE_SPEED = 3;
 
   async function startFlappyBird() {
-    if (state.userCoins < 1) return;
+    if (state.userCoins < 10) return;
     
-    state.userCoins -= 1;
+    state.userCoins -= 10;
     await saveUserToFirebase();
     
     state.gameActive = true;
