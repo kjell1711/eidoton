@@ -761,7 +761,7 @@
               <p class="text-lg font-bold text-purple-700">🎉 Neuer Highscore! 🎉</p>
             </div>
           ` : ''}
-          <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
+          <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=2? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=2? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
         </div>
       </div>
     `;
