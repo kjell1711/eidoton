@@ -4,10 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Learning App (HTML)</title>
-  <!-- Tailwind via CDN to preserve the original design classes -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* kleine zusätzliche Styles damit Übergänge wie in React aussehen */
     .rounded-3xl { border-radius: 1.5rem; }
     .rounded-2xl { border-radius: 1rem; }
     .rounded-xl { border-radius: .75rem; }
@@ -15,18 +13,38 @@
     .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
     .transition-all { transition: all .18s ease; }
     .news-text { white-space: pre-wrap; }
+    
+    /* PIN Pad Styles */
+    .pin-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #3B82F6;
+      transition: all 0.2s;
+    }
+    .pin-dot.filled {
+      background: #3B82F6;
+    }
+    
+    /* Tab Bar Active Indicator */
+    .tab-active {
+      background: #F3F4F6;
+    }
+    
+    /* Flappy Bird Canvas */
+    #gameCanvas {
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body class="antialiased">
-  <!-- Root -->
   <div id="app" class="flex flex-col h-screen bg-gray-50"></div>
 
   <script type="module">
-  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-  // Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyBXZG4vsRDqpe_XRHeb64MV-NbLbKtijWs",
     authDomain: "eidoton.firebaseapp.com",
@@ -37,7 +55,6 @@
     measurementId: "G-GCBC06PE3R"
   };
 
-  // Initialize Firebase
   let db;
   try {
     const firebaseApp = initializeApp(firebaseConfig);
@@ -48,76 +65,83 @@
   }
 
   const configData = {
-  questions: {
-    mathe: [
-      { question: "Was ist 12 + 8?", answers: ["22", "18", "20"], correct: 2 },
-      { question: "Was ist 7 × 6?", answers: ["42", "40", "44"], correct: 0 },
-      { question: "Was ist 50 - 23?", answers: ["29", "25", "27"], correct: 2 },
-      { question: "Was ist 36 ÷ 4?", answers: ["9", "8", "10"], correct: 0 },
-      { question: "Was ist 5 × 5?", answers: ["25", "30", "20"], correct: 0 },
-      { question: "Was ist 100 - 45?", answers: ["55", "50", "60"], correct: 0 },
-      { question: "Was ist 8 + 17?", answers: ["27", "25", "23"], correct: 1 },
-      { question: "Was ist 9 × 4?", answers: ["36", "32", "40"], correct: 0 },
-      { question: "Was ist die Wurzel aus 81?", answers: ["9", "8", "7"], correct: 0 },
-      { question: "Was ist 3² + 4²?", answers: ["25", "12", "16"], correct: 0 },
-      { question: "Was ist 20% von 150?", answers: ["25", "30", "20"], correct: 1 },
-      { question: "Wie viele Grad hat ein rechter Winkel?", answers: ["180°", "45°", "90°"], correct: 2 },
-      { question: "Wie viel ist 0,25 als Bruch?", answers: ["1/4", "1/3", "1/2"], correct: 0 },
-      { question: "Was ist 15 × 8?", answers: ["130", "120", "110"], correct: 1 },
-      { question: "Was ist (6 + 4) × 2?", answers: ["18", "16", "20"], correct: 2 },
-      { question: "Was ergibt 2³?", answers: ["8", "6", "9"], correct: 0 },
-      { question: "Wie viel ist 10% von 90?", answers: ["10", "9", "8"], correct: 1 },
-      { question: "Was ist die Fläche eines Rechtecks mit 8 cm und 5 cm?", answers: ["30 cm²", "40 cm²", "45 cm²"], correct: 1 },
-      { question: "Was ist 0,5 × 200?", answers: ["100", "50", "150"], correct: 0 },
-      { question: "Was ist ¼ von 60?", answers: ["15", "25", "30"], correct: 0 }
-    ],
+    questions: {
+      mathe: [
+        { question: "Was ist 12 + 8?", answers: ["22", "18", "20"], correct: 2 },
+        { question: "Was ist 7 × 6?", answers: ["42", "40", "44"], correct: 0 },
+        { question: "Was ist 50 - 23?", answers: ["29", "25", "27"], correct: 2 },
+        { question: "Was ist 36 ÷ 4?", answers: ["9", "8", "10"], correct: 0 },
+        { question: "Was ist 5 × 5?", answers: ["25", "30", "20"], correct: 0 },
+        { question: "Was ist 100 - 45?", answers: ["55", "50", "60"], correct: 0 },
+        { question: "Was ist 8 + 17?", answers: ["27", "25", "23"], correct: 1 },
+        { question: "Was ist 9 × 4?", answers: ["36", "32", "40"], correct: 0 },
+        { question: "Was ist die Wurzel aus 81?", answers: ["9", "8", "7"], correct: 0 },
+        { question: "Was ist 3² + 4²?", answers: ["25", "12", "16"], correct: 0 },
+        { question: "Was ist 20% von 150?", answers: ["25", "30", "20"], correct: 1 },
+        { question: "Wie viele Grad hat ein rechter Winkel?", answers: ["180°", "45°", "90°"], correct: 2 },
+        { question: "Wie viel ist 0,25 als Bruch?", answers: ["1/4", "1/3", "1/2"], correct: 0 },
+        { question: "Was ist 15 × 8?", answers: ["130", "120", "110"], correct: 1 },
+        { question: "Was ist (6 + 4) × 2?", answers: ["18", "16", "20"], correct: 2 },
+        { question: "Was ergibt 2³?", answers: ["8", "6", "9"], correct: 0 },
+        { question: "Wie viel ist 10% von 90?", answers: ["10", "9", "8"], correct: 1 },
+        { question: "Was ist die Fläche eines Rechtecks mit 8 cm und 5 cm?", answers: ["30 cm²", "40 cm²", "45 cm²"], correct: 1 },
+        { question: "Was ist 0,5 × 200?", answers: ["100", "50", "150"], correct: 0 },
+        { question: "Was ist ¼ von 60?", answers: ["15", "25", "30"], correct: 0 },
+        { question: "Was ist 144 ÷ 12?", answers: ["12", "14", "11"], correct: 0 },
+        { question: "Was ist 25% von 80?", answers: ["20", "25", "15"], correct: 0 },
+        { question: "Was ist 11 × 11?", answers: ["121", "111", "131"], correct: 0 },
+        { question: "Was ist die Hälfte von 126?", answers: ["63", "60", "65"], correct: 0 }
+      ],
 
-    deutsch: [
-      { question: "Welches Wort ist ein Verb?", answers: ["rot", "Haus", "laufen"], correct: 2 },
-      { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["7", "5", "6"], correct: 1 },
-      { question: "Was reimt sich auf 'Haus'?", answers: ["Maus", "Baum", "Hand"], correct: 0 },
-      { question: "Welches Wort ist richtig: der, die oder das?", answers: ["die Sonne", "der Sonne", "das Sonne"], correct: 0 },
-      { question: "Was ist der Plural von 'Kind'?", answers: ["Kinds", "Kinder", "Kindes"], correct: 1 },
-      { question: "Welcher Buchstabe kommt nach M?", answers: ["N", "O", "L"], correct: 0 },
-      { question: "Was ist ein Adjektiv?", answers: ["Ein Wiewort", "Ein Namenwort", "Ein Tunwort"], correct: 0 },
-      { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto", "Photto", "Fotto"], correct: 0 },
-      { question: "Was ist ein Synonym für 'schnell'?", answers: ["rasch", "träge", "langsam"], correct: 0 },
-      { question: "Welche Zeitform ist 'Ich hatte gegessen'?", answers: ["Perfekt", "Plusquamperfekt", "Präteritum"], correct: 1 },
-      { question: "Was ist das Gegenteil von 'kalt'?", answers: ["still", "frostig", "heiß"], correct: 2 },
-      { question: "Welches Satzzeichen steht am Ende einer Frage?", answers: [".", "!", "?"], correct: 2 },
-      { question: "Was bedeutet das Wort 'mutig'?", answers: ["tapfer", "ängstlich", "langsam"], correct: 0 },
-      { question: "In welchem Satz ist ein Rechtschreibfehler?", answers: ["Er läuft schnell.", "Sie hatt Hunger.", "Ich gehe nach Hause."], correct: 1 },
-      { question: "Was ist ein Subjekt im Satz 'Der Hund bellt'?", answers: ["bellt", "Hund", "Der"], correct: 1 },
-      { question: "Was ist ein Nomen?", answers: ["Dinge oder Personen", "Tätigkeiten", "Eigenschaften"], correct: 0 },
-      { question: "Wie heißt das Gegenteil von 'oben'?", answers: ["unten", "über", "hinten"], correct: 0 },
-      { question: "Was ist ein zusammengesetztes Wort?", answers: ["Schule", "Hausaufgabe", "laufen"], correct: 1 }
-    ],
+      deutsch: [
+        { question: "Welches Wort ist ein Verb?", answers: ["rot", "Haus", "laufen"], correct: 2 },
+        { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["7", "5", "6"], correct: 1 },
+        { question: "Was reimt sich auf 'Haus'?", answers: ["Maus", "Baum", "Hand"], correct: 0 },
+        { question: "Welches Wort ist richtig: der, die oder das?", answers: ["die Sonne", "der Sonne", "das Sonne"], correct: 0 },
+        { question: "Was ist der Plural von 'Kind'?", answers: ["Kinds", "Kinder", "Kindes"], correct: 1 },
+        { question: "Welcher Buchstabe kommt nach M?", answers: ["N", "O", "L"], correct: 0 },
+        { question: "Was ist ein Adjektiv?", answers: ["Ein Wiewort", "Ein Namenwort", "Ein Tunwort"], correct: 0 },
+        { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto", "Photto", "Fotto"], correct: 0 },
+        { question: "Was ist ein Synonym für 'schnell'?", answers: ["rasch", "träge", "langsam"], correct: 0 },
+        { question: "Welche Zeitform ist 'Ich hatte gegessen'?", answers: ["Perfekt", "Plusquamperfekt", "Präteritum"], correct: 1 },
+        { question: "Was ist das Gegenteil von 'kalt'?", answers: ["still", "frostig", "heiß"], correct: 2 },
+        { question: "Welches Satzzeichen steht am Ende einer Frage?", answers: [".", "!", "?"], correct: 2 },
+        { question: "Was bedeutet das Wort 'mutig'?", answers: ["tapfer", "ängstlich", "langsam"], correct: 0 },
+        { question: "In welchem Satz ist ein Rechtschreibfehler?", answers: ["Er läuft schnell.", "Sie hatt Hunger.", "Ich gehe nach Hause."], correct: 1 },
+        { question: "Was ist ein Subjekt im Satz 'Der Hund bellt'?", answers: ["bellt", "Hund", "Der"], correct: 1 },
+        { question: "Was ist ein Nomen?", answers: ["Dinge oder Personen", "Tätigkeiten", "Eigenschaften"], correct: 0 },
+        { question: "Wie heißt das Gegenteil von 'oben'?", answers: ["unten", "über", "hinten"], correct: 0 },
+        { question: "Was ist ein zusammengesetztes Wort?", answers: ["Schule", "Hausaufgabe", "laufen"], correct: 1 },
+        { question: "Welches Wort wird groß geschrieben?", answers: ["ich laufe", "Die Katze", "er spielt"], correct: 1 },
+        { question: "Was ist ein Prädikat?", answers: ["Das Verb im Satz", "Das Subjekt", "Das Objekt"], correct: 0 }
+      ],
 
-    englisch: [
-      { question: "What is 'Katze' in English?", answers: ["mouse", "cat", "dog"], correct: 1 },
-      { question: "What color is 'gelb'?", answers: ["blue", "yellow", "green"], correct: 1 },
-      { question: "How do you say 'Danke'?", answers: ["Please", "Hello", "Thank you"], correct: 2 },
-      { question: "What is 'Wasser' in English?", answers: ["earth", "water", "fire"], correct: 1 },
-      { question: "What does 'big' mean?", answers: ["schnell", "groß", "klein"], correct: 1 },
-      { question: "What is 'Buch' in English?", answers: ["book", "pen", "table"], correct: 0 },
-      { question: "How do you say 'Tschüss'?", answers: ["Goodbye", "Thanks", "Hello"], correct: 0 },
-      { question: "What is 'Schule' in English?", answers: ["car", "school", "house"], correct: 1 },
-      { question: "What is the past tense of 'go'?", answers: ["gone", "goed", "went"], correct: 2 },
-      { question: "Translate: 'Ich bin müde.'", answers: ["I am tired.", "I am late.", "I am hungry."], correct: 0 },
-      { question: "Which word means the opposite of 'cold'?", answers: ["wet", "cool", "hot"], correct: 2 },
-      { question: "What is 'Apfel' in English?", answers: ["pear", "banana", "apple"], correct: 2 },
-      { question: "What does 'beautiful' mean?", answers: ["wunderschön", "langsam", "hässlich"], correct: 0 },
-      { question: "Fill in: 'He ___ a car.'", answers: ["has", "had", "have"], correct: 0 },
-      { question: "What is 'Freund' in English?", answers: ["friend", "boy", "man"], correct: 0 },
-      { question: "What is 'schnell' in English?", answers: ["slow", "fast", "late"], correct: 1 },
-      { question: "What is 'Ich mag Pizza'?", answers: ["I like pizza", "I have pizza", "I am pizza"], correct: 0 },
-      { question: "What is 'Tisch' in English?", answers: ["chair", "table", "bed"], correct: 1 },
-      { question: "What is the plural of 'child'?", answers: ["childs", "children", "childes"], correct: 1 }
-    ]
-  }
-};
+      englisch: [
+        { question: "What is 'Katze' in English?", answers: ["mouse", "cat", "dog"], correct: 1 },
+        { question: "What color is 'gelb'?", answers: ["blue", "yellow", "green"], correct: 1 },
+        { question: "How do you say 'Danke'?", answers: ["Please", "Hello", "Thank you"], correct: 2 },
+        { question: "What is 'Wasser' in English?", answers: ["earth", "water", "fire"], correct: 1 },
+        { question: "What does 'big' mean?", answers: ["schnell", "groß", "klein"], correct: 1 },
+        { question: "What is 'Buch' in English?", answers: ["book", "pen", "table"], correct: 0 },
+        { question: "How do you say 'Tschüss'?", answers: ["Goodbye", "Thanks", "Hello"], correct: 0 },
+        { question: "What is 'Schule' in English?", answers: ["car", "school", "house"], correct: 1 },
+        { question: "What is the past tense of 'go'?", answers: ["gone", "goed", "went"], correct: 2 },
+        { question: "Translate: 'Ich bin müde.'", answers: ["I am tired.", "I am late.", "I am hungry."], correct: 0 },
+        { question: "Which word means the opposite of 'cold'?", answers: ["wet", "cool", "hot"], correct: 2 },
+        { question: "What is 'Apfel' in English?", answers: ["pear", "banana", "apple"], correct: 2 },
+        { question: "What does 'beautiful' mean?", answers: ["wunderschön", "langsam", "hässlich"], correct: 0 },
+        { question: "Fill in: 'He ___ a car.'", answers: ["has", "had", "have"], correct: 0 },
+        { question: "What is 'Freund' in English?", answers: ["friend", "boy", "man"], correct: 0 },
+        { question: "What is 'schnell' in English?", answers: ["slow", "fast", "late"], correct: 1 },
+        { question: "What is 'Ich mag Pizza'?", answers: ["I like pizza", "I have pizza", "I am pizza"], correct: 0 },
+        { question: "What is 'Tisch' in English?", answers: ["chair", "table", "bed"], correct: 1 },
+        { question: "What is the plural of 'child'?", answers: ["childs", "children", "childes"], correct: 1 },
+        { question: "What does 'happy' mean?", answers: ["glücklich", "traurig", "müde"], correct: 0 },
+        { question: "What is 'Hund' in English?", answers: ["cat", "dog", "bird"], correct: 1 }
+      ]
+    }
+  };
 
-  // --- App State ---
   const state = {
     isLoggedIn: false,
     isBanned: false,
@@ -126,35 +150,59 @@
     userCoins: 0,
     userRichtig: 0,
     userFalsch: 0,
+    userHighscore: 0,
     newsText: '',
     currentTab: 'mathe',
     currentQuestion: null,
     feedback: null,
     loginInput: '',
+    userId: null,
+    
+    // Auth State
+    authStep: 'username', // 'username', 'pin-new', 'pin-login'
+    pin: '',
+    tempUserData: null,
+    
+    // Flappy Bird Game
     gameActive: false,
-    gameScore: 0,
-    gameTime: 30,
-    playerX: 180,
-    coins: [],
     gameOver: false,
-    userId: null
+    bird: { y: 150, velocity: 0 },
+    pipes: [],
+    gameScore: 0,
+    gameFrameId: null
   };
 
-  // DOM root
   const appElement = document.getElementById('app');
 
-  // Helfer
-  function getRandomQuestion(subject) {
-    const q = configData.questions[subject];
-    return q[Math.floor(Math.random()*q.length)];
+  // === Helper Functions ===
+  
+  function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
-  // Firebase Helfer - News laden
+  function getRandomQuestion(subject) {
+    const questions = configData.questions[subject];
+    const q = questions[Math.floor(Math.random() * questions.length)];
+    // Shuffle answers
+    const shuffledAnswers = shuffleArray(q.answers.map((ans, idx) => ({ text: ans, originalIndex: idx })));
+    return {
+      question: q.question,
+      answers: shuffledAnswers.map(a => a.text),
+      correct: shuffledAnswers.findIndex(a => a.originalIndex === q.correct)
+    };
+  }
+
+  // === Firebase Functions ===
+  
   async function loadNewsFromFirebase() {
     try {
       const newsDocRef = doc(db, "app_config", "news");
       const newsDoc = await getDoc(newsDocRef);
-      
       if (newsDoc.exists()) {
         return newsDoc.data().text || '';
       } else {
@@ -166,154 +214,191 @@
     }
   }
 
-  // Firebase Helfer - User laden/speichern
-async function loadUserFromFirebase(name) {
-  try {
-    // Username in Kleinbuchstaben umwandeln, damit Groß/Kleinschreibung egal ist
-    const normalizedName = name.toLowerCase();
+  async function loadUserFromFirebase(name) {
+    try {
+      const normalizedName = name.toLowerCase();
+      const userDocRef = doc(db, "users", normalizedName);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        return null; // User existiert nicht
+      }
+    } catch (error) {
+      console.error("Firebase Fehler beim Laden:", error);
+      return null;
+    }
+  }
 
-    const userDocRef = doc(db, "users", normalizedName);
-    const userDoc = await getDoc(userDocRef);
-    
-    if (userDoc.exists()) {
-      return userDoc.data();
-    } else {
-      // Neuer User - erstelle in Firebase mit Ban-Feldern
+  async function createUserInFirebase(name, pin) {
+    try {
+      const normalizedName = name.toLowerCase();
+      const now = new Date().toISOString();
       const newUser = {
-        name: name, // originaler Name (wie eingegeben)
+        name: name,
+        pin: pin,
         coins: 0,
         richtig: 0,
         falsch: 0,
+        highscore: 0,
         ban: false,
-        banReason: ""
+        banReason: "",
+        accountCreated: now,
+        lastLogin: now,
+        totalLogins: 1
       };
+      const userDocRef = doc(db, "users", normalizedName);
       await setDoc(userDocRef, newUser);
       return newUser;
+    } catch (error) {
+      console.error("Firebase Fehler beim Erstellen:", error);
+      return null;
     }
-  } catch (error) {
-    console.error("Firebase Fehler beim Laden:", error);
-    return null;
   }
-}
 
-async function saveUserToFirebase() {
-  if (!state.userId) return;
-  try {
-    // Auch beim Speichern sicherstellen, dass der Key klein geschrieben ist
-    const normalizedUserId = state.userId.toLowerCase();
-    const userDocRef = doc(db, "users", normalizedUserId);
-    await updateDoc(userDocRef, {
-      coins: state.userCoins,
-      richtig: state.userRichtig,
-      falsch: state.userFalsch
-    });
-  } catch (error) {
-    console.error("Firebase Fehler beim Speichern:", error);
-  }
-}
-
-
-  // --- Game Logic ---
-  let gameInterval = null;
-  let timeInterval = null;
-
-  function startGameLoop() {
-    if (gameInterval) clearInterval(gameInterval);
-    if (timeInterval) clearInterval(timeInterval);
-    
-    // Game loop
-    gameInterval = setInterval(() => {
-      // Update coins - bewegen nach unten
-      state.coins = state.coins.map(c => ({...c, y: c.y + 4}));
+  async function updateLoginStats() {
+    if (!state.userId) return;
+    try {
+      const normalizedUserId = state.userId.toLowerCase();
+      const userDocRef = doc(db, "users", normalizedUserId);
+      const userDoc = await getDoc(userDocRef);
       
-      // Spawn neue Münze
-      if (Math.random() < 0.03) {
-        state.coins.push({ 
-          x: 20 + Math.random() * 340, 
-          y: 0,
-          collected: false
+      if (userDoc.exists()) {
+        const currentLogins = userDoc.data().totalLogins || 0;
+        await updateDoc(userDocRef, {
+          lastLogin: new Date().toISOString(),
+          totalLogins: currentLogins + 1
         });
       }
-      
-      // Check collision
-      state.coins.forEach(coin => {
-        if (!coin.collected && 
-            coin.y > 250 && coin.y < 290 &&
-            coin.x > state.playerX - 10 && coin.x < state.playerX + 50) {
-          coin.collected = true;
-          state.gameScore += 10;
-        }
+    } catch (error) {
+      console.error("Firebase Fehler beim Update Login Stats:", error);
+    }
+  }
+
+  async function saveUserToFirebase() {
+    if (!state.userId) return;
+    try {
+      const normalizedUserId = state.userId.toLowerCase();
+      const userDocRef = doc(db, "users", normalizedUserId);
+      await updateDoc(userDocRef, {
+        coins: state.userCoins,
+        richtig: state.userRichtig,
+        falsch: state.userFalsch,
+        highscore: state.userHighscore
       });
-      
-      // Remove coins that are off screen or collected
-      state.coins = state.coins.filter(c => !c.collected && c.y < 320);
-      
-      render();
-    }, 50);
+    } catch (error) {
+      console.error("Firebase Fehler beim Speichern:", error);
+    }
+  }
+
+  // === Auth Actions ===
+  
+  async function handleUsernameSubmit() {
+    const input = state.loginInput.trim();
+    if (!input) return;
     
-    // Timer countdown
-    timeInterval = setInterval(() => {
-      state.gameTime -= 1;
-      if (state.gameTime <= 0) {
-        endGame();
-      }
-      render();
-    }, 1000);
-  }
-
-  function stopGameLoop() {
-    if (gameInterval) { 
-      clearInterval(gameInterval); 
-      gameInterval = null; 
-    }
-    if (timeInterval) {
-      clearInterval(timeInterval);
-      timeInterval = null;
-    }
-  }
-
-  function movePlayer(direction) {
-    if (!state.gameActive) return;
-    if (direction === 'left') {
-      state.playerX = Math.max(10, state.playerX - 40);
-    } else if (direction === 'right') {
-      state.playerX = Math.min(340, state.playerX + 40);
+    const userData = await loadUserFromFirebase(input);
+    
+    if (userData) {
+      // User existiert - PIN Login
+      state.tempUserData = userData;
+      state.authStep = 'pin-login';
+      state.pin = '';
+    } else {
+      // Neuer User - PIN erstellen
+      state.tempUserData = { name: input };
+      state.authStep = 'pin-new';
+      state.pin = '';
     }
     render();
   }
 
-  // --- Actions ---
-  async function handleLogin() {
-    const input = state.loginInput.trim();
-    if (!input) return;
-    
-    // Lade User und News von Firebase
-    const userData = await loadUserFromFirebase(input);
-    const newsData = await loadNewsFromFirebase();
-    
-    if (userData) {
-      // Check Ban-Status
-      if (userData.ban === true) {
-        state.isBanned = true;
-        state.banReason = userData.banReason || "Kein Grund angegeben";
-        state.userName = userData.name;
-        render();
-        return;
-      }
+  function handlePinInput(digit) {
+    if (state.pin.length < 4) {
+      state.pin += digit;
+      render();
       
-      state.userName = userData.name;
-      state.userCoins = userData.coins;
-      state.userRichtig = userData.richtig || 0;
-      state.userFalsch = userData.falsch || 0;
-      state.newsText = newsData;
-      state.userId = userData.name;
-      state.isLoggedIn = true;
-      state.isBanned = false;
-      state.currentQuestion = getRandomQuestion('mathe');
+      if (state.pin.length === 4) {
+        setTimeout(() => handlePinComplete(), 300);
+      }
+    }
+  }
+
+  function handlePinDelete() {
+    if (state.pin.length > 0) {
+      state.pin = state.pin.slice(0, -1);
       render();
     }
   }
 
+  async function handlePinComplete() {
+    if (state.authStep === 'pin-new') {
+      // Neuen User erstellen
+      const newUser = await createUserInFirebase(state.tempUserData.name, state.pin);
+      if (newUser) {
+        await loginUser(newUser);
+      }
+    } else if (state.authStep === 'pin-login') {
+      // PIN überprüfen
+      if (state.pin === state.tempUserData.pin) {
+        await loginUser(state.tempUserData);
+      } else {
+        // Falscher PIN
+        state.pin = '';
+        alert('Falscher PIN! Bitte versuche es erneut.');
+        render();
+      }
+    }
+  }
+
+  async function loginUser(userData) {
+    if (userData.ban === true) {
+      state.isBanned = true;
+      state.banReason = userData.banReason || "Kein Grund angegeben";
+      state.userName = userData.name;
+      render();
+      return;
+    }
+    
+    const newsData = await loadNewsFromFirebase();
+    
+    state.userName = userData.name;
+    state.userCoins = userData.coins || 0;
+    state.userRichtig = userData.richtig || 0;
+    state.userFalsch = userData.falsch || 0;
+    state.userHighscore = userData.highscore || 0;
+    state.newsText = newsData;
+    state.userId = userData.name;
+    state.isLoggedIn = true;
+    state.isBanned = false;
+    state.currentQuestion = getRandomQuestion('mathe');
+    
+    await updateLoginStats();
+    render();
+  }
+
+  function handleLogout() {
+    state.isLoggedIn = false;
+    state.userName = '';
+    state.userCoins = 0;
+    state.userRichtig = 0;
+    state.userFalsch = 0;
+    state.userHighscore = 0;
+    state.userId = null;
+    state.loginInput = '';
+    state.authStep = 'username';
+    state.pin = '';
+    state.tempUserData = null;
+    state.currentTab = 'mathe';
+    state.currentQuestion = null;
+    state.feedback = null;
+    stopFlappyBird();
+    render();
+  }
+
+  // === Question Actions ===
+  
   async function handleAnswer(index) {
     if (!state.currentQuestion || state.feedback) return;
     const isCorrect = index === state.currentQuestion.correct;
@@ -341,37 +426,161 @@ async function saveUserToFirebase() {
   function handleTabChange(tab) {
     state.currentTab = tab;
     state.feedback = null;
-    if (['mathe','deutsch','englisch'].includes(tab)) state.currentQuestion = getRandomQuestion(tab);
-    else state.currentQuestion = null;
+    if (['mathe','deutsch','englisch'].includes(tab)) {
+      state.currentQuestion = getRandomQuestion(tab);
+    } else {
+      state.currentQuestion = null;
+    }
     render();
   }
 
-  async function startGame() {
+  // === Flappy Bird Game ===
+  
+  let canvas, ctx;
+  const GRAVITY = 0.5;
+  const JUMP_STRENGTH = -8;
+  const PIPE_WIDTH = 60;
+  const PIPE_GAP = 150;
+  const PIPE_SPEED = 3;
+
+  async function startFlappyBird() {
     if (state.userCoins < 10) return;
+    
     state.userCoins -= 10;
     await saveUserToFirebase();
+    
     state.gameActive = true;
     state.gameOver = false;
     state.gameScore = 0;
-    state.gameTime = 30;
-    state.playerX = 180;
-    state.coins = [];
-    startGameLoop();
+    state.bird = { y: 150, velocity: 0 };
+    state.pipes = [];
+    
     render();
+    
+    // Wait for canvas to be rendered
+    setTimeout(() => {
+      canvas = document.getElementById('gameCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+      gameLoop();
+    }, 100);
   }
 
-  async function endGame() {
+  function gameLoop() {
+    if (!state.gameActive || !canvas) return;
+    
+    // Update bird
+    state.bird.velocity += GRAVITY;
+    state.bird.y += state.bird.velocity;
+    
+    // Check ground/ceiling collision
+    if (state.bird.y > 350 || state.bird.y < 0) {
+      endFlappyBird();
+      return;
+    }
+    
+    // Update pipes
+    state.pipes.forEach(pipe => {
+      pipe.x -= PIPE_SPEED;
+      
+      // Check collision
+      if (pipe.x < 100 && pipe.x > 20) {
+        if (state.bird.y < pipe.top || state.bird.y > pipe.top + PIPE_GAP) {
+          endFlappyBird();
+          return;
+        }
+      }
+      
+      // Score when passing pipe
+      if (!pipe.scored && pipe.x < 50) {
+        pipe.scored = true;
+        state.gameScore++;
+      }
+    });
+    
+    // Remove off-screen pipes
+    state.pipes = state.pipes.filter(p => p.x > -PIPE_WIDTH);
+    
+    // Add new pipes
+    if (state.pipes.length === 0 || state.pipes[state.pipes.length - 1].x < 200) {
+      const topHeight = 50 + Math.random() * 150;
+      state.pipes.push({
+        x: 400,
+        top: topHeight,
+        scored: false
+      });
+    }
+    
+    // Draw
+    drawFlappyBird();
+    
+    state.gameFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function drawFlappyBird() {
+    if (!ctx) return;
+    
+    // Clear
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, 400, 400);
+    
+    // Draw pipes
+    ctx.fillStyle = '#22C55E';
+    state.pipes.forEach(pipe => {
+      // Top pipe
+      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
+      // Bottom pipe
+      ctx.fillRect(pipe.x, pipe.top + PIPE_GAP, PIPE_WIDTH, 400 - pipe.top - PIPE_GAP);
+    });
+    
+    // Draw bird
+    ctx.fillStyle = '#FBBF24';
+    ctx.beginPath();
+    ctx.arc(60, state.bird.y, 15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw score
+    ctx.fillStyle = '#1F2937';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText(`Score: ${state.gameScore}`, 10, 30);
+  }
+
+  function jumpBird() {
+    if (state.gameActive) {
+      state.bird.velocity = JUMP_STRENGTH;
+    }
+  }
+
+  async function endFlappyBird() {
     if (!state.gameActive) return;
+    
     state.gameActive = false;
     state.gameOver = true;
-    const coinsEarned = Math.floor(state.gameScore / 50);
-    state.userCoins += coinsEarned;
-    await saveUserToFirebase();
-    stopGameLoop();
+    
+    if (state.gameScore > state.userHighscore) {
+      state.userHighscore = state.gameScore;
+      await saveUserToFirebase();
+    }
+    
+    if (state.gameFrameId) {
+      cancelAnimationFrame(state.gameFrameId);
+      state.gameFrameId = null;
+    }
+    
     render();
   }
 
-  // --- Render Functions ---
+  function stopFlappyBird() {
+    state.gameActive = false;
+    state.gameOver = false;
+    if (state.gameFrameId) {
+      cancelAnimationFrame(state.gameFrameId);
+      state.gameFrameId = null;
+    }
+  }
+
+  // === Render Functions ===
+  
   function renderBanned() {
     return `
       <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-red-100 p-4">
@@ -392,19 +601,47 @@ async function saveUserToFirebase() {
   }
 
   function renderLogin() {
-    return `
-      <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-          <div class="text-center mb-8">
-            <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">📚</div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Willkommen!</h1>
-            <p class="text-gray-600">Gib deinen Namen ein, um zu starten</p>
+    if (state.authStep === 'username') {
+      return `
+        <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+          <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+              <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">📚</div>
+              <h1 class="text-3xl font-bold text-gray-800 mb-2">Willkommen!</h1>
+              <p class="text-gray-600">Gib deinen Namen ein, um zu starten</p>
+            </div>
+            <input id="loginInput" type="text" value="" placeholder="Dein Name" class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-2xl mb-4 focus:outline-none focus:border-blue-500 transition-colors" />
+            <button id="loginBtn" class="w-full bg-blue-500 text-white py-4 rounded-2xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg">Weiter</button>
           </div>
-          <input id="loginInput" type="text" value="" placeholder="Dein Name" class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-2xl mb-4 focus:outline-none focus:border-blue-500 transition-colors" />
-          <button id="loginBtn" class="w-full bg-blue-500 text-white py-4 rounded-2xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-lg">Los geht's!</button>
         </div>
-      </div>
-    `;
+      `;
+    } else if (state.authStep === 'pin-new' || state.authStep === 'pin-login') {
+      const isNew = state.authStep === 'pin-new';
+      return `
+        <div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+          <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+              <div class="inline-block p-4 bg-blue-500 rounded-full mb-4 text-white text-4xl">🔐</div>
+              <h1 class="text-2xl font-bold text-gray-800 mb-2">${isNew ? 'PIN erstellen' : 'PIN eingeben'}</h1>
+              <p class="text-gray-600 mb-6">${isNew ? 'Wähle einen 4-stelligen PIN' : 'Gib deinen PIN ein'}</p>
+              
+              <div class="flex justify-center gap-4 mb-8">
+                ${[0,1,2,3].map(i => `<div class="pin-dot ${i < state.pin.length ? 'filled' : ''}"></div>`).join('')}
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              ${[1,2,3,4,5,6,7,8,9].map(n => `
+                <button class="pin-btn bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-2xl font-bold py-6 rounded-full transition-all" data-digit="${n}">${n}</button>
+              `).join('')}
+              <div></div>
+              <button class="pin-btn bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-2xl font-bold py-6 rounded-full transition-all" data-digit="0">0</button>
+              <button id="pinDelete" class="bg-red-100 hover:bg-red-200 active:bg-red-300 text-2xl py-6 rounded-full transition-all">⌫</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
   }
 
   function renderHeader() {
@@ -412,9 +649,16 @@ async function saveUserToFirebase() {
     return `
       <div class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-800 capitalize">${title}</h2>
-        <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full">
-          <span class="text-2xl mr-2">🪙</span>
-          <span class="font-bold text-lg text-yellow-700" id="coinCount">${state.userCoins}</span>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-yellow-100 px-4 py-2 rounded-full">
+            <span class="text-2xl mr-2">🪙</span>
+            <span class="font-bold text-lg text-yellow-700" id="coinCount">${state.userCoins}</span>
+          </div>
+          ${state.currentTab === 'profil' ? `
+            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white p-3 rounded-xl transition-all shadow-lg">
+              <span class="text-xl">🚪</span>
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -429,6 +673,25 @@ async function saveUserToFirebase() {
           <div class="flex items-center justify-center gap-3 mt-6 bg-yellow-50 py-4 px-6 rounded-2xl">
             <span class="text-4xl">🪙</span>
             <span class="text-3xl font-bold text-yellow-700">${state.userCoins} Münzen</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mt-6">
+            <div class="bg-green-50 p-4 rounded-2xl border-2 border-green-200">
+              <div class="text-3xl mb-2">✅</div>
+              <div class="text-2xl font-bold text-green-700">${state.userRichtig}</div>
+              <div class="text-sm text-green-600">Richtig</div>
+            </div>
+            <div class="bg-red-50 p-4 rounded-2xl border-2 border-red-200">
+              <div class="text-3xl mb-2">❌</div>
+              <div class="text-2xl font-bold text-red-700">${state.userFalsch}</div>
+              <div class="text-sm text-red-600">Falsch</div>
+            </div>
+          </div>
+          
+          <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 mt-4">
+            <div class="text-3xl mb-2">🏆</div>
+            <div class="text-2xl font-bold text-purple-700">${state.userHighscore}</div>
+            <div class="text-sm text-purple-600">Flappy Bird Highscore</div>
           </div>
         </div>
         
@@ -447,13 +710,21 @@ async function saveUserToFirebase() {
     return `
       <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
-          <div class="text-yellow-500 text-6xl mb-4">🪙</div>
-          <h3 class="text-2xl font-bold text-gray-800 mb-4">Münzen Fangen</h3>
-          <p class="text-gray-600 mb-6">Fange so viele Münzen wie möglich in 30 Sekunden!</p>
+          <div class="text-yellow-500 text-6xl mb-4">🐦</div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-4">Flappy Bird</h3>
+          <p class="text-gray-600 mb-6">Fliege durch die Röhren und sammle Punkte!</p>
+          
+          ${state.userHighscore > 0 ? `
+            <div class="bg-purple-50 rounded-2xl p-4 mb-6 border-2 border-purple-200">
+              <p class="text-sm text-purple-600 mb-1">Dein Highscore</p>
+              <p class="text-3xl font-bold text-purple-700">🏆 ${state.userHighscore}</p>
+            </div>
+          ` : ''}
+          
           <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
             <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 10 Münzen</p>
-            <p class="text-sm text-yellow-600">Du bekommst 1 Münze pro 50 Punkte zurück</p>
-            <p class="text-xs text-yellow-500 mt-2">Nutze die Links/Rechts Buttons zum Bewegen</p>
+            <p class="text-sm text-yellow-600">Tippe oder klicke, um zu fliegen!</p>
+            <p class="text-xs text-yellow-500 mt-2">Vermeide die grünen Röhren</p>
           </div>
           <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
         </div>
@@ -462,26 +733,15 @@ async function saveUserToFirebase() {
   }
 
   function renderGameActive() {
-    const coinsHtml = state.coins.map((coin, i) => `
-      <div class="absolute text-3xl pointer-events-none" style="left:${coin.x}px;top:${coin.y}px">🪙</div>
-    `).join('');
-
     return `
       <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-3xl shadow-lg p-6">
           <div class="mb-4 flex justify-between items-center">
-            <div class="text-xl font-bold text-yellow-600">Punkte: ${state.gameScore}</div>
-            <div class="text-xl font-bold text-blue-600">Zeit: ${state.gameTime}s</div>
+            <div class="text-xl font-bold text-blue-600">Score: ${state.gameScore}</div>
+            <button id="endGameBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all">Beenden</button>
           </div>
-          <div class="relative bg-gradient-to-b from-sky-200 to-sky-100 rounded-2xl overflow-hidden mb-4" style="height:320px">
-            ${coinsHtml}
-            <div class="absolute text-4xl pointer-events-none" style="left:${state.playerX}px;bottom:20px">🧺</div>
-            <div class="absolute bottom-0 left-0 right-0 h-2 bg-green-600"></div>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <button id="moveLeftBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">← LINKS</button>
-            <button id="moveRightBtn" class="bg-blue-500 text-white py-5 rounded-xl text-xl font-bold hover:bg-blue-600 active:bg-blue-700 active:scale-95 transition-all shadow-lg">RECHTS →</button>
-          </div>
+          <canvas id="gameCanvas" width="400" height="400" class="w-full cursor-pointer"></canvas>
+          <p class="text-center text-gray-600 mt-4 text-sm">Tippe auf das Spiel, um zu fliegen!</p>
         </div>
       </div>
     `;
@@ -491,12 +751,16 @@ async function saveUserToFirebase() {
     return `
       <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-3xl shadow-lg p-8 text-center">
-          <div class="text-6xl mb-4">🎉</div>
-          <h3 class="text-3xl font-bold text-gray-800 mb-4">Zeit abgelaufen!</h3>
-          <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
-            <p class="text-2xl font-bold text-yellow-700 mb-2">${state.gameScore} Punkte</p>
-            <p class="text-lg text-yellow-600">+${Math.floor(state.gameScore/50)} Münzen verdient! 🪙</p>
+          <div class="text-6xl mb-4">💥</div>
+          <h3 class="text-3xl font-bold text-gray-800 mb-4">Game Over!</h3>
+          <div class="bg-blue-50 rounded-2xl p-6 mb-4">
+            <p class="text-2xl font-bold text-blue-700 mb-2">${state.gameScore} Punkte</p>
           </div>
+          ${state.gameScore === state.userHighscore && state.gameScore > 0 ? `
+            <div class="bg-purple-50 rounded-2xl p-4 mb-6 border-2 border-purple-200">
+              <p class="text-lg font-bold text-purple-700">🎉 Neuer Highscore! 🎉</p>
+            </div>
+          ` : ''}
           <button id="tryAgainBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=10? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=10? 'Nochmal spielen!' : 'Nicht genug Münzen'}</button>
         </div>
       </div>
@@ -528,22 +792,39 @@ async function saveUserToFirebase() {
 
   function renderBottomNav() {
     const c = state.currentTab;
-    function cls(tab,color){ return `flex flex-col items-center p-3 rounded-xl transition-colors ${c===tab? color : 'text-gray-500'}`; }
+    function cls(tab, color) { 
+      const isActive = c === tab;
+      return `flex flex-col items-center p-4 rounded-xl transition-all ${isActive ? color + ' tab-active' : 'text-gray-500'}`;
+    }
     return `
-      <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
-        <div class="flex justify-around items-center py-2 max-w-2xl mx-auto">
-          <button data-tab="spiele" class="${cls('spiele','text-purple-600')}"><div class="text-2xl">🎮</div><span class="text-xs font-medium">Spiele</span></button>
-          <button data-tab="mathe" class="${cls('mathe','text-blue-600')}"><div class="text-2xl">🔢</div><span class="text-xs font-medium">Mathe</span></button>
-          <button data-tab="deutsch" class="${cls('deutsch','text-red-600')}"><div class="text-2xl">📘</div><span class="text-xs font-medium">Deutsch</span></button>
-          <button data-tab="englisch" class="${cls('englisch','text-green-600')}"><div class="text-2xl">🌍</div><span class="text-xs font-medium">Englisch</span></button>
-          <button data-tab="profil" class="${cls('profil','text-indigo-600')}"><div class="text-2xl">👤</div><span class="text-xs font-medium">Profil</span></button>
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-lg">
+        <div class="flex justify-around items-center py-1 max-w-2xl mx-auto">
+          <button data-tab="spiele" class="${cls('spiele','text-purple-600')}">
+            <div class="text-3xl mb-1">🎮</div>
+            <span class="text-xs font-semibold">Spiele</span>
+          </button>
+          <button data-tab="mathe" class="${cls('mathe','text-blue-600')}">
+            <div class="text-3xl mb-1">🔢</div>
+            <span class="text-xs font-semibold">Mathe</span>
+          </button>
+          <button data-tab="deutsch" class="${cls('deutsch','text-red-600')}">
+            <div class="text-3xl mb-1">📘</div>
+            <span class="text-xs font-semibold">Deutsch</span>
+          </button>
+          <button data-tab="englisch" class="${cls('englisch','text-green-600')}">
+            <div class="text-3xl mb-1">🌍</div>
+            <span class="text-xs font-semibold">Englisch</span>
+          </button>
+          <button data-tab="profil" class="${cls('profil','text-indigo-600')}">
+            <div class="text-3xl mb-1">👤</div>
+            <span class="text-xs font-semibold">Profil</span>
+          </button>
         </div>
       </div>
     `;
   }
 
   function render() {
-    // Ban-Screen hat Priorität
     if (state.isBanned) {
       appElement.innerHTML = renderBanned();
       return;
@@ -551,18 +832,31 @@ async function saveUserToFirebase() {
 
     if (!state.isLoggedIn) {
       appElement.innerHTML = renderLogin();
-      const inp = document.getElementById('loginInput');
-      if (inp) {
-        inp.value = state.loginInput;
-        inp.addEventListener('input', (e) => { state.loginInput = e.target.value; });
-        inp.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+      
+      if (state.authStep === 'username') {
+        const inp = document.getElementById('loginInput');
+        if (inp) {
+          inp.value = state.loginInput;
+          inp.addEventListener('input', (e) => { state.loginInput = e.target.value; });
+          inp.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleUsernameSubmit(); });
+        }
+        const btn = document.getElementById('loginBtn');
+        if (btn) btn.addEventListener('click', handleUsernameSubmit);
+      } else {
+        // PIN pad
+        document.querySelectorAll('.pin-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const digit = e.currentTarget.getAttribute('data-digit');
+            handlePinInput(digit);
+          });
+        });
+        const delBtn = document.getElementById('pinDelete');
+        if (delBtn) delBtn.addEventListener('click', handlePinDelete);
       }
-      const btn = document.getElementById('loginBtn');
-      if (btn) btn.addEventListener('click', handleLogin);
       return;
     }
 
-    // Hauptansicht
+    // Main view
     appElement.innerHTML = `
       ${renderHeader()}
       <div class="flex-1 overflow-y-auto p-6 pb-24">
@@ -573,48 +867,39 @@ async function saveUserToFirebase() {
       ${renderBottomNav()}
     `;
 
-    // After DOM insert: attach handlers
+    // Attach handlers
     const coinEl = document.getElementById('coinCount'); 
     if (coinEl) coinEl.textContent = state.userCoins;
 
+    // Logout button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+      if (confirm('Möchtest du dich wirklich ausloggen?')) {
+        handleLogout();
+      }
+    });
+
     // Game handlers
     const startBtn = document.getElementById('startGameBtn'); 
-    if (startBtn) {
-      startBtn.addEventListener('click', () => {
-        startGame();
-      });
-    }
+    if (startBtn) startBtn.addEventListener('click', startFlappyBird);
     
     const tryBtn = document.getElementById('tryAgainBtn'); 
     if (tryBtn) {
-      tryBtn.addEventListener('click', async () => { 
+      tryBtn.addEventListener('click', () => { 
         state.gameOver = false; 
-        if (state.userCoins >= 10) await startGame(); 
-        render(); 
+        if (state.userCoins >= 10) startFlappyBird(); 
       });
     }
     
-    const leftBtn = document.getElementById('moveLeftBtn');
-    if (leftBtn) {
-      leftBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        movePlayer('left');
-      });
-      leftBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        movePlayer('left');
-      });
-    }
+    const endBtn = document.getElementById('endGameBtn');
+    if (endBtn) endBtn.addEventListener('click', endFlappyBird);
     
-    const rightBtn = document.getElementById('moveRightBtn');
-    if (rightBtn) {
-      rightBtn.addEventListener('click', (e) => {
+    const gameCanvas = document.getElementById('gameCanvas');
+    if (gameCanvas && state.gameActive) {
+      gameCanvas.addEventListener('click', jumpBird);
+      gameCanvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        movePlayer('right');
-      });
-      rightBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        movePlayer('right');
+        jumpBird();
       });
     }
 
@@ -627,14 +912,20 @@ async function saveUserToFirebase() {
     });
 
     // Bottom nav
-    document.querySelectorAll('[data-tab]').forEach(bt => bt.addEventListener('click', (e)=> { handleTabChange(e.currentTarget.getAttribute('data-tab')); }));
+    document.querySelectorAll('[data-tab]').forEach(bt => {
+      bt.addEventListener('click', (e) => { 
+        handleTabChange(e.currentTarget.getAttribute('data-tab')); 
+      });
+    });
   }
 
-  // initial render
+  // Initial render
   render();
 
-  // cleanup when page is closed
-  window.addEventListener('beforeunload', ()=> { stopGameLoop(); });
+  // Cleanup
+  window.addEventListener('beforeunload', () => { 
+    stopFlappyBird(); 
+  });
   </script>
 </body>
 </html>
