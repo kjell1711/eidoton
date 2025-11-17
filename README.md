@@ -4,7 +4,7 @@
 
 
 
-#  Eidoton – Deine smarte Learning-App
+#  Eidoton – Deine Learning-App für dein Wissen
 
 Willkommen bei **Eidoton**, deine Learning App um dein Wissen zu Stärken. Du kannst mit der Learing App für Tests Lernen, oder auch für Prüfungen. Damit kannst du dein Allgemeinwissen Stärken.
 
