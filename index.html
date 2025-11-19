@@ -1,11 +1,25 @@
-By Jenaro & Kjell                 V-4.1
+By Jenaro & Kjell                 V 4.7.5.6
 <!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Learning App (HTML)</title>
+  <title>Eidoton</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 💠 PWA: Manifest einbinden -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 💠 PWA: iPad/iPhone Vollbild -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- 💠 Design-Farbe für App Titel & Statusbar -->
+  <meta name="theme-color" content="#ffffff">
+
   <style>
     .rounded-3xl { border-radius: 1.5rem; }
     .rounded-2xl { border-radius: 1rem; }
@@ -65,83 +79,250 @@ By Jenaro & Kjell                 V-4.1
     console.error("Firebase Fehler:", error);
   }
 
-  const configData = {
+const configData = {
     questions: {
       mathe: [
-        { question: "Was ist 12 + 8?", answers: ["22", "18", "20"], correct: 2 },
-        { question: "Was ist 7 × 6?", answers: ["42", "40", "44"], correct: 0 },
-        { question: "Was ist 50 - 23?", answers: ["29", "25", "27"], correct: 2 },
-        { question: "Was ist 36 ÷ 4?", answers: ["9", "8", "10"], correct: 0 },
-        { question: "Was ist 5 × 5?", answers: ["25", "30", "20"], correct: 0 },
-        { question: "Was ist 100 - 45?", answers: ["55", "50", "60"], correct: 0 },
-        { question: "Was ist 8 + 17?", answers: ["27", "25", "23"], correct: 1 },
-        { question: "Was ist 9 × 4?", answers: ["36", "32", "40"], correct: 0 },
-        { question: "Was ist die Wurzel aus 81?", answers: ["9", "8", "7"], correct: 0 },
-        { question: "Was ist 3² + 4²?", answers: ["25", "12", "16"], correct: 0 },
-        { question: "Was ist 20% von 150?", answers: ["25", "30", "20"], correct: 1 },
-        { question: "Wie viele Grad hat ein rechter Winkel?", answers: ["180°", "45°", "90°"], correct: 2 },
-        { question: "Wie viel ist 0,25 als Bruch?", answers: ["1/4", "1/3", "1/2"], correct: 0 },
-        { question: "Was ist 15 × 8?", answers: ["130", "120", "110"], correct: 1 },
-        { question: "Was ist (6 + 4) × 2?", answers: ["18", "16", "20"], correct: 2 },
-        { question: "Was ergibt 2³?", answers: ["8", "6", "9"], correct: 0 },
-        { question: "Wie viel ist 10% von 90?", answers: ["10", "9", "8"], correct: 1 },
-        { question: "Was ist die Fläche eines Rechtecks mit 8 cm und 5 cm?", answers: ["30 cm²", "40 cm²", "45 cm²"], correct: 1 },
-        { question: "Was ist 0,5 × 200?", answers: ["100", "50", "150"], correct: 0 },
-        { question: "Was ist ¼ von 60?", answers: ["15", "25", "30"], correct: 0 },
-        { question: "Was ist 144 ÷ 12?", answers: ["12", "14", "11"], correct: 0 },
-        { question: "Was ist 25% von 80?", answers: ["20", "25", "15"], correct: 0 },
-        { question: "Was ist 11 × 11?", answers: ["121", "111", "131"], correct: 0 },
-        { question: "Was ist die Hälfte von 126?", answers: ["63", "60", "65"], correct: 0 }
+       { question: "Berechne 4²", answers: ["14", "16", "18"], correct: 1 },
+       { question: "Berechne die Wurzel aus 81", answers: ["7", "9", "10"], correct: 1 },
+       { question: "Berechne 3⁴", answers: ["64", "81", "27"], correct: 1 },
+       { question: "Berechne die Wurzel aus 144", answers: ["10", "12", "14"], correct: 1 },
+       { question: "Berechne 2⁷", answers: ["64", "128", "32"], correct: 1 },
+       { question: "Berechne die Wurzel aus 100", answers: ["9", "10", "11"], correct: 1 },
+       { question: "Berechne 5²", answers: ["30", "20", "25"], correct: 2 },
+       { question: "Berechne die Wurzel aus 64", answers: ["7", "9", "8"], correct: 2 },
+       { question: "Berechne 6³", answers: ["125", "216", "64"], correct: 1 },
+       { question: "Berechne die Wurzel aus 169", answers: ["14", "13", "15"], correct: 0 },
+       { question: "Berechne 10²", answers: ["100", "200", "10"], correct: 0 },
+       { question: "Berechne die Wurzel aus 256", answers: ["15", "16", "14"], correct: 1 },
+       { question: "Berechne 7²", answers: ["48", "49", "50"], correct: 1 },
+       { question: "Berechne die Wurzel aus 196", answers: ["14", "13", "15"], correct: 0 },
+       { question: "Berechne 3³", answers: ["30", "27", "24"], correct: 1 },
+       { question: "Berechne die Wurzel aus 225", answers: ["15", "14", "16"], correct: 0 },
+       { question: "Berechne 8²", answers: ["72", "64", "50"], correct: 1 },
+       { question: "Berechne die Wurzel aus 49", answers: ["6", "8", "7"], correct: 2 },
+       { question: "Berechne 9³", answers: ["729", "800", "512"], correct: 0 },
+       { question: "Berechne die Wurzel aus 81", answers: ["8", "9", "10"], correct: 1 },
+       { question: "Berechne 2⁵", answers: ["128", "64", "32"], correct: 0 },
+       { question: "Berechne die Wurzel aus 400", answers: ["18", "20", "22"], correct: 1 },
+       { question: "Berechne 5³", answers: ["100", "125", "150"], correct: 1 },
+       { question: "Berechne die Wurzel aus 121", answers: ["12", "11", "10"], correct: 1 },
+       { question: "Berechne 4³", answers: ["128", "64", "256"], correct: 0 },
+       { question: "Berechne die Wurzel aus 36", answers: ["7", "6", "8"], correct: 1 },
+       { question: "Berechne 3⁵", answers: ["225", "243", "1024"], correct: 1 },
+       { question: "Berechne die Wurzel aus 16", answers: ["5", "4", "6"], correct: 1 },
+       { question: "Berechne 2⁴", answers: ["8", "16", "32"], correct: 1 },
+       { question: "Berechne die Wurzel aus 64", answers: ["7", "8", "6"], correct: 1 },
+       { question: "Berechne 6²", answers: ["30", "24", "36"], correct: 2 },
+       { question: "Berechne die Wurzel aus 81", answers: ["8", "9", "10"], correct: 1 },
+       { question: "Berechne 7³", answers: ["343", "441", "250"], correct: 0 },
+       { question: "Berechne die Wurzel aus 49", answers: ["7", "8", "9"], correct: 0 },
+       { question: "Berechne 8³", answers: ["1024", "512", "256"], correct: 1 },
+       { question: "Berechne die Wurzel aus 256", answers: ["16", "20", "12"], correct: 0 },
+       { question: "Berechne 10³", answers: ["1500", "1000", "500"], correct: 1 },
+       { question: "Berechne die Wurzel aus 25", answers: ["6", "4", "5"], correct: 2 },
+       { question: "Berechne 9²", answers: ["90", "72", "81"], correct: 2 },
+       { question: "Berechne die Wurzel aus 9", answers: ["4", "3", "2"], correct: 1 },
+       { question: "Berechne 4⁴", answers: ["128", "256", "512"], correct: 1 },
+       { question: "Berechne die Wurzel aus 64", answers: ["6", "7", "8"], correct: 2 },
+       { question: "Berechne 3⁶", answers: ["512", "729", "1024"], correct: 1 },
+       { question: "Berechne die Wurzel aus 36", answers: ["5", "6", "7"], correct: 1 },
+       { question: "Berechne 5⁴", answers: ["400", "625", "500"], correct: 1 },
+       { question: "Berechne die Wurzel aus 16", answers: ["3", "5", "4"], correct: 2 },
+       { question: "Berechne 7²", answers: ["48", "50", "49"], correct: 2 },
+       { question: "Berechne die Wurzel aus 121", answers: ["12", "10", "11"], correct: 2 },
+       { question: "Berechne 2³", answers: ["10", "6", "8"], correct: 1 },
+       { question: "Berechne 2⁸", answers: ["256", "512", "128"], correct: 1 },
+       { question: "Berechne die Wurzel aus 225", answers: ["15", "16", "14"], correct: 0 },
+       { question: "Berechne 5⁵", answers: ["3125", "1024", "125"], correct: 0 },
+       { question: "Berechne die Wurzel aus 49", answers: ["7", "8", "6"], correct: 0 },
+       { question: "Berechne 4²", answers: ["16", "18", "14"], correct: 0 },
+       { question: "Berechne die Wurzel aus 100", answers: ["9", "10", "11"], correct: 1 },
+       { question: "Berechne 3³", answers: ["27", "30", "24"], correct: 0 },
+       { question: "Berechne die Wurzel aus 64", answers: ["7", "9", "8"], correct: 2 },
+       { question: "Berechne 6⁴", answers: ["1296", "162", "216"], correct: 0 },
+       { question: "Berechne die Wurzel aus 81", answers: ["8", "9", "7"], correct: 1 },
+       { question: "Berechne 2⁶", answers: ["64", "128", "32"], correct: 0 },
+       { question: "Berechne die Wurzel aus 36", answers: ["6", "7", "8"], correct: 0 },
+       { question: "Berechne 7³", answers: ["343", "350", "330"], correct: 0 },
+       { question: "Berechne die Wurzel aus 169", answers: ["13", "12", "14"], correct: 0 },
+       { question: "Berechne 10³", answers: ["1000", "1100", "900"], correct: 0 },
+       { question: "Berechne die Wurzel aus 144", answers: ["13", "12", "14"], correct: 1 },
+       { question: "Berechne 3²", answers: ["9", "8", "10"], correct: 0 },
+       { question: "Berechne die Wurzel aus 256", answers: ["16", "20", "18"], correct: 0 },
+       { question: "Berechne 8⁴", answers: ["4096", "1024", "2048"], correct: 0 },
+       { question: "Berechne die Wurzel aus 25", answers: ["4", "5", "6"], correct: 1 },
+       { question: "Berechne 2⁴", answers: ["16", "8", "32"], correct: 0 },
+       { question: "Berechne die Wurzel aus 49", answers: ["6", "7", "8"], correct: 1 },
+       { question: "Berechne 9²", answers: ["72", "81", "90"], correct: 1 },
+       { question: "Berechne die Wurzel aus 400", answers: ["18", "20", "22"], correct: 1 },
+       { question: "Berechne 5³", answers: ["100", "125", "150"], correct: 1 },
+       { question: "Berechne die Wurzel aus 121", answers: ["11", "12", "10"], correct: 0 },
+       { question: "Berechne 6³", answers: ["216", "200", "250"], correct: 0 },
+       { question: "Berechne die Wurzel aus 36", answers: ["5", "6", "7"], correct: 1 },
+       { question: "Berechne 7²", answers: ["48", "49", "50"], correct: 1 },
+       { question: "Berechne die Wurzel aus 9", answers: ["2", "3", "4"], correct: 1 },
+       { question: "Berechne 4⁵", answers: ["1024", "512", "256"], correct: 2 },
+       { question: "Berechne die Wurzel aus 64", answers: ["7", "8", "9"], correct: 1 },
+       { question: "Berechne 3⁴", answers: ["81", "64", "72"], correct: 0 },
+       { question: "Berechne die Wurzel aus 1000", answers: ["31.62", "30", "32"], correct: 0 },
+       { question: "Berechne 5²", answers: ["30", "25", "20"], correct: 1 },
+       { question: "Berechne die Wurzel aus 196", answers: ["12", "13", "14"], correct: 2 },
+       { question: "Berechne 6²", answers: ["36", "30", "40"], correct: 0 },
+       { question: "Berechne die Wurzel aus 81", answers: ["9", "8", "10"], correct: 0 },
+       { question: "Berechne 3⁶", answers: ["729", "512", "1024"], correct: 0 },
+       { question: "Berechne die Wurzel aus 16", answers: ["4", "5", "6"], correct: 0 },
+       { question: "Berechne 8²", answers: ["64", "72", "50"], correct: 0 },
+       { question: "Berechne die Wurzel aus 625", answers: ["25", "26", "24"], correct: 0 },
+       { question: "Berechne 7⁴", answers: ["2401", "1296", "1024"], correct: 0 },
+       { question: "Berechne die Wurzel aus 49", answers: ["7", "6", "8"], correct: 0 },
+       { question: "Berechne 2⁹", answers: ["512", "256", "1024"], correct: 0 },
+       { question: "Berechne die Wurzel aus 64", answers: ["8", "7", "9"], correct: 0 },
+       { question: "Berechne 9³", answers: ["729", "512", "1000"], correct: 0 },
+       { question: "Berechne die Wurzel aus 400", answers: ["22", "20", "18"], correct: 1 },
+       { question: "Berechne 10⁴", answers: ["10000", "1000", "5000"], correct: 0 },
+       { question: "Berechne die Wurzel aus 256", answers: ["16", "15", "18"], correct: 0 },
+       { question: "Berechne 4³", answers: ["128", "64", "256"], correct: 2 },
+       { question: "Berechne die Wurzel aus 25", answers: ["6", "4", "5"], correct: 2 },
+       { question: "Berechne 2⁶", answers: ["32", "64", "128"], correct: 1 },
+       { question: "Berechne die Wurzel aus 100", answers: ["10", "11", "9"], correct: 0 }
       ],
 
       deutsch: [
-        { question: "Welches Wort ist ein Verb?", answers: ["rot", "Haus", "laufen"], correct: 2 },
-        { question: "Wie viele Vokale hat das deutsche Alphabet?", answers: ["7", "5", "6"], correct: 1 },
-        { question: "Was reimt sich auf 'Haus'?", answers: ["Maus", "Baum", "Hand"], correct: 0 },
-        { question: "Welches Wort ist richtig: der, die oder das?", answers: ["die Sonne", "der Sonne", "das Sonne"], correct: 0 },
-        { question: "Was ist der Plural von 'Kind'?", answers: ["Kinds", "Kinder", "Kindes"], correct: 1 },
-        { question: "Welcher Buchstabe kommt nach M?", answers: ["N", "O", "L"], correct: 0 },
-        { question: "Was ist ein Adjektiv?", answers: ["Ein Wiewort", "Ein Namenwort", "Ein Tunwort"], correct: 0 },
-        { question: "Wie schreibt man 'Foto' richtig?", answers: ["Foto", "Photto", "Fotto"], correct: 0 },
-        { question: "Was ist ein Synonym für 'schnell'?", answers: ["rasch", "träge", "langsam"], correct: 0 },
-        { question: "Welche Zeitform ist 'Ich hatte gegessen'?", answers: ["Perfekt", "Plusquamperfekt", "Präteritum"], correct: 1 },
-        { question: "Was ist das Gegenteil von 'kalt'?", answers: ["still", "frostig", "heiß"], correct: 2 },
-        { question: "Welches Satzzeichen steht am Ende einer Frage?", answers: [".", "!", "?"], correct: 2 },
-        { question: "Was bedeutet das Wort 'mutig'?", answers: ["tapfer", "ängstlich", "langsam"], correct: 0 },
-        { question: "In welchem Satz ist ein Rechtschreibfehler?", answers: ["Er läuft schnell.", "Sie hatt Hunger.", "Ich gehe nach Hause."], correct: 1 },
-        { question: "Was ist ein Subjekt im Satz 'Der Hund bellt'?", answers: ["bellt", "Hund", "Der"], correct: 1 },
-        { question: "Was ist ein Nomen?", answers: ["Dinge oder Personen", "Tätigkeiten", "Eigenschaften"], correct: 0 },
-        { question: "Wie heißt das Gegenteil von 'oben'?", answers: ["unten", "über", "hinten"], correct: 0 },
-        { question: "Was ist ein zusammengesetztes Wort?", answers: ["Schule", "Hausaufgabe", "laufen"], correct: 1 },
-        { question: "Welches Wort wird groß geschrieben?", answers: ["ich laufe", "Die Katze", "er spielt"], correct: 1 },
-        { question: "Was ist ein Prädikat?", answers: ["Das Verb im Satz", "Das Subjekt", "Das Objekt"], correct: 0 }
+    { question: "Setze das Satzzeichen richtig: Der Hund der vor dem Haus liegt ist sehr zutraulich.", answers: ["nach: 'der Hund'", "nach: 'vor dem Haus'", "nach: 'sehr'"], correct: 0 },
+    { question: "Setze das Satzzeichen richtig: Wir fahren morgen nach Berlin weil wir dort Verwandte besuchen wollen.", answers: ["nach: 'fahren'", "nach: 'Berlin'", "nach: 'morgen'"], correct: 1 },
+    { question: "Setze das Satzzeichen richtig: Ich möchte heute ins Kino gehen aber ich habe keine Lust alleine zu gehen.", answers: ["nach: 'gehen'", "nach: 'Lust'", "nach: 'alleine'"], correct: 0 },
+    { question: "Setze das Satzzeichen richtig: Sie hat gestern das Buch das sie von ihrer Freundin bekommen hat gelesen.", answers: ["nach: 'bekommen'", "nach: von", "nach: 'Buch'"], correct: 2 },
+    { question: "Aktiv oder Passivsatz: Der Hund wird von den Kindern gefüttert.", answers: ["Aktiv", "Weiß ich nicht", "Passiv"], correct: 2 },
+    { question: "Aktiv oder Passivsatz: Die Kinder spielen im Garten.", answers: ["Passiv", "Weiß ich nicht", "Aktiv"], correct: 2 },
+    { question: "Aktiv oder Passivsatz: Die Lehrerin erklärt den Schülern die Grammatik ", answers: ["Aktiv", "Weiß ich nicht", "Passiv"], correct: 0 },
+    { question: "Aktiv oder Passivsatz: Der Kuchen wird morgen gebacken.", answers: ["Aktiv", "Weiß ich nicht", "Passiv"], correct: 2 },
+    { question: "Haupt oder Nebensatz: Weil sie so müde war, ging sie früh ins Bett", answers: ["Hauptsatz", "Weiß ich nicht", "Nebensatz"], correct: 2 },
+    { question: "Haupt oder Nebensatz: Sie ging früh ins Bett, weil sie so müde war.", answers: ["Hauptsatz", "Weiß ich nicht", "Nebensatz"], correct: 0 },
+    { question: "Haupt oder Nebensatz: Als der Wecker klingelte, stand ich auf.", answers: ["Hauptsatz", "Weiß ich nicht", "Nebensatz"], correct: 2 },
+    { question: "Was ist ein Synonym für schön", answers: ["hübsch", "komisch", "hässlich"], correct: 0 },
+    { question: "Was ist ein Synonym für schnell", answers: ["langsam", "rasch", "klein"], correct: 1 },
+    { question: "Was ist das Subjekt im Satz: 'Der Hund läuft im Park.'?", answers: ["Der Hund", "läuft", "im Park"], correct: 0 },
+    { question: "Bestimme das Objekt im Satz: 'Maria gibt ihrem Bruder ein Geschenk.'", answers: ["Maria", "gibt", "ein Geschenk"], correct: 2 },
+    { question: "Welche Funktion hat der Satzteil 'im Sommer' im Satz: 'Im Sommer gehen wir oft wandern.'?", answers: ["Subjekt", "Prädikat", "adverbiale Bestimmung der Zeit"], correct: 2 },
+    { question: "Wie lautet das Prädikat im Satz: 'Die Schüler schreiben die Prüfung.'?", answers: ["Die Schüler", "schreiben", "die Prüfung"], correct: 1 },
+    { question: "Bestimme das Subjekt im Satz: 'Gestern hat der Lehrer den Test korrigiert.'", answers: ["Gestern", "der Lehrer", "den Test"], correct: 1 },
+    { question: "Welches Satzglied ist im folgenden Satz an erster Stelle: 'Mit Freude spielte er die Melodie.'?", answers: ["Mit Freude", "spielte", "die Melodie"], correct: 0 },
+    { question: "Welches Wort ist das Prädikat im Satz: 'Die Vögel singen jeden Morgen.'?", answers: ["Die Vögel", "singen", "jeden Morgen"], correct: 1 },
+    { question: "Wie lautet die adverbiale Bestimmung des Ortes im Satz: 'Sie fährt jeden Tag zur Arbeit.'?", answers: ["jeden Tag", "fährt", "zur Arbeit"], correct: 2 },
+    { question: "Bestimme die Funktion des Satzteils 'im Garten' im Satz: 'Die Kinder spielen im Garten.'", answers: ["Subjekt", "adverbiale Bestimmung des Ortes", "Prädikat"], correct: 1 },
+    { question: "Was ist das Objekt im Satz: 'Er liest ein Buch.'?", answers: ["Er", "liest", "ein Buch"], correct: 2 },
+    { question: "Welches Satzglied ist das Prädikat im Satz: 'Die Katze schläft den ganzen Tag.'?", answers: ["Die Katze", "schläft", "den ganzen Tag"], correct: 1 },
+    { question: "Bestimme das Subjekt im Satz: 'Im Winter schneit es oft.'", answers: ["Im Winter", "schneit", "es"], correct: 2 },
+    { question: "Was ist das Prädikat im Satz: 'Abends kocht mein Vater das Abendessen.'?", answers: ["Abends", "kocht", "mein Vater"], correct: 1 },
+    { question: "Was ist die adverbiale Bestimmung des Ortes im Satz: 'Die Kinder spielen im Park.'?", answers: ["Die Kinder", "spielen", "im Park"], correct: 2 },
+    { question: "Bestimme das Objekt im Satz: 'Sie schenkt ihrem Freund ein Buch.'", answers: ["Sie", "schenkt", "ein Buch"], correct: 2 },
+    { question: "Welches Satzglied ist 'früh am Morgen' im Satz: 'Früh am Morgen fährt er zur Arbeit.'?", answers: ["adverbiale Bestimmung der Zeit", "Subjekt", "Prädikat"], correct: 0 },
+    { question: "Bestimme das Subjekt im Satz: 'An diesem Tag ist das Wetter sehr schön.'", answers: ["An diesem Tag", "das Wetter", "ist"], correct: 1 },
+    { question: "Welche Funktion hat der Satzteil 'mit seiner Schwester' im Satz: 'Er geht mit seiner Schwester in den Park.'?", answers: ["adverbiale Bestimmung des Ortes", "Prädikat", "adverbiale Bestimmung der Begleitung"], correct: 2 },
+    { question: "Bestimme das Prädikat im Satz: 'Die Katze springt auf das Sofa.'", answers: ["Die Katze", "springt", "auf das Sofa"], correct: 1 },
+    { question: "Bestimme die adverbiale Bestimmung der Zeit im Satz: 'Am Abend liest er immer ein Buch.'", answers: ["Am Abend", "liest", "ein Buch"], correct: 0 },
+    { question: "Setze das Komma richtig: Ich mag Äpfel ___ Birnen.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Wir gehen ins Kino ___ weil es regnet.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Lehrer erklärt die Aufgabe.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Aufgabe wird vom Lehrer erklärt.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich kaufte Brot ___ Milch ___ und Eier.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Peter ging nach Hause ___ er war müde.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Katze fängt die Maus.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Maus wird von der Katze gefangen.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich weiß nicht ___ ob er kommt.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Ich habe Hunger ___ trotzdem esse ich nichts.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Polizei untersucht den Unfall.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Unfall wird von der Polizei untersucht.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Er spielt Fußball ___ Basketball ___ und Tennis.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Ich hoffe ___ dass du kommst.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Hund beißt den Mann.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Mann wird vom Hund gebissen.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich lese ein Buch ___ während ich Musik höre.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Sie mag Äpfel ___ Birnen ___ und Trauben.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Kinder bauen einen Sandkasten.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Ein Sandkasten wird von den Kindern gebaut.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich gehe nach Hause ___ weil es spät ist.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Er lachte laut ___ doch niemand hörte ihn.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Mechaniker repariert das Auto.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Das Auto wird vom Mechaniker repariert.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Wir fahren nach Berlin ___ und besuchen Freunde.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Ich weiß nicht ___ ob er die Wahrheit sagt.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Mutter kocht das Mittagessen.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Das Mittagessen wird von der Mutter gekocht.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Er kam zu spät ___ weil der Bus verspätet war.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Ich ging ins Kino ___ doch der Film war ausverkauft.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Künstler malt ein Bild.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Ein Bild wird vom Künstler gemalt.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Sie mag Hunde ___ Katzen ___ und Vögel.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Ich glaube ___ dass er gewinnt.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Lehrer korrigiert die Klausur.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Klausur wird vom Lehrer korrigiert.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich esse Pizza ___ und trinke Cola.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Wir gehen ins Theater ___ obwohl wir müde sind.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Koch bereitet das Essen zu.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Das Essen wird vom Koch zubereitet.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich mag Schokolade ___ aber keine Bonbons.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Er wollte kommen ___ doch er war krank.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Die Schüler schreiben einen Aufsatz.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Ein Aufsatz wird von den Schülern geschrieben.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 },
+    { question: "Setze das Komma richtig: Ich lese ein Buch ___ während ich Tee trinke.", answers: [",", ";", "."], correct: 0 },
+    { question: "Setze das Komma richtig: Wir gehen spazieren ___ obwohl es regnet.", answers: [",", ";", "."], correct: 0 },
+    { question: "Aktiviere oder Passiv: Der Hund bewacht das Haus.", answers: ["Aktiv", "Passiv", "Keins"], correct: 0 },
+    { question: "Aktiviere oder Passiv: Das Haus wird vom Hund bewacht.", answers: ["Aktiv", "Passiv", "Keins"], correct: 1 }
       ],
 
       englisch: [
-        { question: "What is 'Katze' in English?", answers: ["mouse", "cat", "dog"], correct: 1 },
-        { question: "What color is 'gelb'?", answers: ["blue", "yellow", "green"], correct: 1 },
-        { question: "How do you say 'Danke'?", answers: ["Please", "Hello", "Thank you"], correct: 2 },
-        { question: "What is 'Wasser' in English?", answers: ["earth", "water", "fire"], correct: 1 },
-        { question: "What does 'big' mean?", answers: ["schnell", "groß", "klein"], correct: 1 },
-        { question: "What is 'Buch' in English?", answers: ["book", "pen", "table"], correct: 0 },
-        { question: "How do you say 'Tschüss'?", answers: ["Goodbye", "Thanks", "Hello"], correct: 0 },
-        { question: "What is 'Schule' in English?", answers: ["car", "school", "house"], correct: 1 },
-        { question: "What is the past tense of 'go'?", answers: ["gone", "goed", "went"], correct: 2 },
-        { question: "Translate: 'Ich bin müde.'", answers: ["I am tired.", "I am late.", "I am hungry."], correct: 0 },
-        { question: "Which word means the opposite of 'cold'?", answers: ["wet", "cool", "hot"], correct: 2 },
-        { question: "What is 'Apfel' in English?", answers: ["pear", "banana", "apple"], correct: 2 },
-        { question: "What does 'beautiful' mean?", answers: ["wunderschön", "langsam", "hässlich"], correct: 0 },
-        { question: "Fill in: 'He ___ a car.'", answers: ["has", "had", "have"], correct: 0 },
-        { question: "What is 'Freund' in English?", answers: ["friend", "boy", "man"], correct: 0 },
-        { question: "What is 'schnell' in English?", answers: ["slow", "fast", "late"], correct: 1 },
-        { question: "What is 'Ich mag Pizza'?", answers: ["I like pizza", "I have pizza", "I am pizza"], correct: 0 },
-        { question: "What is 'Tisch' in English?", answers: ["chair", "table", "bed"], correct: 1 },
-        { question: "What is the plural of 'child'?", answers: ["childs", "children", "childes"], correct: 1 },
-        { question: "What does 'happy' mean?", answers: ["glücklich", "traurig", "müde"], correct: 0 },
-        { question: "What is 'Hund' in English?", answers: ["cat", "dog", "bird"], correct: 1 }
+        { question: "what is right: I (never/see) such a beautiful movie before.", answers: ["never saw", "have never seen", "see"], correct: 1 },
+        { question: "what is right: He (visit) London last summer.", answers: ["visitet", "visited", "visit"], correct: 1 },
+        { question: "what is right: We (already/eat) lunch when she arrived.", answers: ["had aten", "have ate", "had already eaten"], correct: 2},
+        { question: "what is right: They (live) in Paris for three years", answers: ["have lived", "livet", "had lived"], correct: 0 },
+        { question: "fill in the blanks: I am going ______ the cinema.", answers: ["tu", "to", "do"], correct: 1 },
+        { question: "fill in the blanks: She was born ______ 1990.", answers: ["in", "on", "in the"], correct: 0 },
+        { question: "fill in the blanks: They arrived ______ 7 o'clock. ", answers: ["am", "on", "at"], correct: 2 },
+        { question: "fill in the blanks: We’re meeting ______ Monday. ", answers: ["at", "on", "in"], correct: 1 },
+        { question: "fill in the blanks: I’ve been waiting ______ an hour.", answers: ["for", "since", "at"], correct: 0 },
+        { question: "what is a synonym for: Happy", answers: ["joyful", "sad", "cry"], correct: 0 },
+        { question: "what is a synonym for: fast", answers: ["slow", "speedy", "run"], correct: 1 },
+        { question: "what is a synonym for: difficult ", answers: ["easy", "hard", "slow"], correct: 1 },
+        { question: "what is a synonym for: Important  ", answers: ["esay", "Happy", "significant"], correct: 2 },
+        { question: "what is a synonym for: Start ", answers: ["begin", "speak", "read"], correct: 0 },
+        { question: "fill in the blanks: This gift is ______ you.", answers: ["from", "on", "for"], correct: 2 },
+        { question: "Wie lautet have in simple past?", answers: ["had", "have", "hod"], correct: 0 },
+        { question: "What is the correct form: I (go) to the store yesterday.", answers: ["went", "goes", "going"], correct: 0 },
+        { question: "Choose the correct sentence: He (study) English every day.", answers: ["He study English every day.", "He studies English every day.", "He studied English every day."], correct: 1 },
+        { question: "Which one is the synonym of 'happy'?", answers: ["sad", "joyful", "angry"], correct: 1 },
+        { question: "Choose the correct sentence: She (read) a book when I called her.", answers: ["She reads a book when I called her.", "She read a book when I called her.", "She was reading a book when I called her."], correct: 2 },
+        { question: "Fill in the blank: They arrived ______ 8 o'clock.", answers: ["on", "at", "in"], correct: 1 },
+        { question: "What is the plural of 'child'?", answers: ["children", "childs", "childes"], correct: 0 },
+        { question: "Which is the correct form: He (never/see) a movie like that before.", answers: ["never saw", "has never seen", "never seen"], correct: 1 },
+        { question: "Choose the correct sentence: I (be) to Paris last summer.", answers: ["I were to Paris last summer.", "I am to Paris last summer.", "I was to Paris last summer."], correct: 2 },
+        { question: "Fill in the blank: We haven't seen her ______ last week.", answers: ["since", "for", "on"], correct: 0 },
+        { question: "Which one is correct? I (not/understand) the question.", answers: ["I don't understand the question.", "I doesn't understand the question.", "I not understand the question."], correct: 0 },
+        { question: "What is the opposite of 'old'?", answers: ["young", "new", "modern"], correct: 1 },
+        { question: "Fill in the blank: I will wait ______ the bus stop.", answers: ["at", "on", "in"], correct: 0 },
+        { question: "Which sentence is correct?", answers: ["I have meet her before.", "I met her before.", "I have met her before."], correct: 2 },
+        { question: "What is the correct form: They (live) in this city for 10 years.", answers: ["They lived in this city for 10 years.", "They have lived in this city for 10 years.", "They live in this city for 10 years."], correct: 1 },
+        { question: "Fill in the blank: She is the (smart) student in the class.", answers: ["smarter", "smartest", "more smart"], correct: 1 },
+        { question: "Choose the correct form: I (finish) my homework when you called.", answers: ["I finish my homework when you called.", "I finished my homework when you called.", "I had finished my homework when you called."], correct: 2 },
+        { question: "What is the past tense of 'run'?", answers: ["runned", "ran", "run"], correct: 1 },
+        { question: "What is the past tense of 'run'?", answers: ["runned", "ran", "run"], correct: 1 },
+        { question: "Which one is the correct word? He is always (late) for class.", answers: ["lateness", "late", "lates"], correct: 1 },
+        { question: "Fill in the blank: We will go to the cinema ______ it stops raining.", answers: ["until", "before", "after"], correct: 2 },
+        { question: "What is the opposite of 'hot'?", answers: ["cold", "warm", "cool"], correct: 0 },
+        { question: "What is the correct plural form of 'goose'?", answers: ["gooses", "geese", "goosees"], correct: 1 },
+        { question: "Fill in the blank: I have been working here ______ two years.", answers: ["for", "since", "during"], correct: 0 },
+        { question: "What is the synonym of 'difficult'?", answers: ["easy", "hard", "simple"], correct: 1 },
+        { question: "Which of the following is correct? I have seen him (yesterday).", answers: ["I have seen him yesterday.", "I seen him yesterday.", "I saw him yesterday."], correct: 2 },
+        { question: "What is the correct sentence?", answers: ["She don't like coffee.", "She doesn't like coffee.", "She doesn't likes coffee."], correct: 1 },
+        { question: "Fill in the blank: I will call you when I (arrive) home.", answers: ["arrived", "arriving", "arrives"], correct: 2 },
+        { question: "Choose the correct question form: (you/go) to the party last weekend?", answers: ["Did you went to the party last weekend?", "Do you went to the party last weekend?", "Did you go to the party last weekend?"], correct: 2 },
+        { question: "Which one is correct?", answers: ["She is more taller than me.", "She is the most taller than me.", "She is taller than me."], correct: 2 },
+        { question: "What is the opposite of 'light'?", answers: ["heavy", "dark", "bright"], correct: 0 }
+
       ]
     }
   };
+
 
   const state = {
     isLoggedIn: false,
@@ -153,7 +334,7 @@ By Jenaro & Kjell                 V-4.1
     userFalsch: 0,
     userHighscore: 0,
     newsText: '',
-    currentTab: 'mathe',
+    currentTab: 'profil',
     currentQuestion: null,
     feedback: null,
     loginInput: '',
@@ -276,6 +457,28 @@ By Jenaro & Kjell                 V-4.1
       console.error("Firebase Fehler beim Update Login Stats:", error);
     }
   }
+
+ // function user daten laden 
+ async function refreshUserData() {
+  if (!state.userId) return;
+
+  const data = await loadUserFromFirebase(state.userId);
+  if (!data) return;
+
+  // Coins & Stats neu laden
+  state.userCoins = data.coins || 0;
+  state.userRichtig = data.richtig || 0;
+  state.userFalsch = data.falsch || 0;
+  state.userHighscore = data.highscore || 0;
+
+  // Ban-Status neu laden
+  state.isBanned = data.ban || false;
+  state.banReason = data.banReason || "";
+
+  render();
+}
+
+
 
   async function saveUserToFirebase() {
     if (!state.userId) return;
@@ -424,22 +627,33 @@ By Jenaro & Kjell                 V-4.1
     }, 1500);
   }
 
-  function handleTabChange(tab) {
-    state.currentTab = tab;
-    state.feedback = null;
-    if (['mathe','deutsch','englisch'].includes(tab)) {
-      state.currentQuestion = getRandomQuestion(tab);
-    } else {
-      state.currentQuestion = null;
-    }
-    render();
+
+
+async function handleTabChange(tab) {
+  state.currentTab = tab;
+  state.feedback = null;
+
+  // 👉 Immer Daten neu laden, egal welcher Tab
+  await refreshUserData();
+
+  if (['mathe','deutsch','englisch'].includes(tab)) {
+    state.currentQuestion = getRandomQuestion(tab);
+  } else {
+    state.currentQuestion = null;
   }
+
+  render();
+}
+
+
+
+
 
   // === Flappy Bird Game ===
   
   let canvas, ctx;
-  const GRAVITY = 0.4;
-  const JUMP_STRENGTH = -8;
+  const GRAVITY = 0.3;
+  const JUMP_STRENGTH = -5;
   const PIPE_WIDTH = 60;
   const PIPE_GAP = 150;
   const PIPE_SPEED = 3;
@@ -725,7 +939,7 @@ By Jenaro & Kjell                 V-4.1
           <div class="bg-yellow-50 rounded-2xl p-6 mb-6">
             <p class="text-lg text-yellow-700 font-semibold mb-2">Kosten: 2 Münzen</p>
             <p class="text-sm text-yellow-600">Tippe oder klicke, um zu fliegen!</p>
-            <p class="text-xs text-yellow-500 mt-2">Vermeide die grünen Röhren</p>
+            <p class="text-xs text-yellow-500 mt-2">eidoton</p>
           </div>
           <button id="startGameBtn" class="w-full py-4 rounded-2xl text-lg font-semibold transition-colors ${state.userCoins>=2? 'bg-yellow-500 text-white hover:bg-yellow-600 shadow-lg' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">${state.userCoins>=2? 'Spiel starten!' : 'Nicht genug Münzen'}</button>
         </div>
@@ -742,7 +956,7 @@ By Jenaro & Kjell                 V-4.1
             <button id="endGameBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all">Beenden</button>
           </div>
           <canvas id="gameCanvas" width="400" height="400" class="w-full cursor-pointer"></canvas>
-          <p class="text-center text-gray-600 mt-4 text-sm">Tippe auf das Spiel, um zu fliegen!</p>
+          <p class="text-center text-gray-600 mt-4 text-sm">eidoton</p>
         </div>
       </div>
     `;
